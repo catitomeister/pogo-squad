@@ -152,20 +152,23 @@ const fmtWhen = (s, e) => {
   const tm = d => d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).replace(":00", "");
   return a.toDateString() === new Date(b - 1).toDateString() ? `${day(a)}, ${tm(a)}–${tm(b)}` : `${day(a)} – ${day(b)}`;
 };
+// Short WhatsApp message: what, when, who, food plans, link (details live on the site)
 function shareText(id) {
   const e = (window.DATA_EVENTS || []).find(x => x.id === id);
   if (!e) return location.href;
-  const lines = [`${EMOJI[e.type] || "📅"} ${e.name}`, fmtWhen(e.start, e.end)];
-  for (const m of (e.mons || []).slice(0, 3)) {
-    lines.push(`${m.name}${m.cp20 ? ` · 100% ${m.cp20}${m.cp25 ? ` / boosted ${m.cp25}` : ""}` : ""}${m.shiny ? " ✨" : ""}`);
-  }
+  const a = new Date(e.start), z = new Date(e.end);
+  const md = d => `${d.toLocaleDateString("en-US", { weekday: "short" })} ${d.getMonth() + 1}/${d.getDate()}`;
+  const tm = d => d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).replace(":00", "");
+  const when = a.toDateString() === new Date(z - 1).toDateString()
+    ? `${md(a)} · ${tm(a).replace(/\s(AM|PM)$/,(m, p) => (tm(z).endsWith(p) ? "" : " " + p))}–${tm(z)}`
+    : `${md(a)} – ${md(z)}`;
+  const lines = [`${EMOJI[e.type] || "📅"} ${e.name.replace(/^Gigantamax /, "G-Max ")}`, when];
   const names = going.get(id) || [];
   if (names.length) lines.push(`Going: ${names.join(", ")}`);
   for (const m of meetups.filter(x => x.eventId === id)) {
-    const n = (m.plus || []).length;
-    lines.push(`🍜 ${m.when}${m.place ? " · " + m.place : ""} (${m.by}${n ? " +" + n : ""})`);
+    lines.push(`🍜 ${m.when}${m.place ? " · " + m.place : ""}`);
   }
-  lines.push("", `Who's in? 👉 ${location.origin}${location.pathname}`);
+  lines.push(`👉 ${location.origin}${location.pathname}`);
   return lines.join("\n");
 }
 const waLink = id => "https://wa.me/?text=" + encodeURIComponent(shareText(id));

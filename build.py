@@ -261,7 +261,7 @@ def ics_text(events):
 
 
 SITE_URL = "https://catitomeister.github.io/pogo-squad/"
-OG_DESC = "This week's Pokémon GO events, hundo CPs, raid weaknesses and who's going."
+OG_DESC = "Pokémon GO events, hundo CPs and meetups for our squad."
 
 
 def _font(size, bold=True):
@@ -517,17 +517,17 @@ def main():
                  # Link preview (WhatsApp, iMessage, etc.)
                  f'<meta name="description" content="{OG_DESC}">'
                  '<meta property="og:type" content="website"><meta property="og:site_name" content="POGO Squad">'
-                 '<meta property="og:title" content="POGO Squad · This week">'
+                 '<meta property="og:title" content="POGO Squad">'
                  f'<meta property="og:description" content="{OG_DESC}">'
                  f'<meta property="og:url" content="{SITE_URL}">'
-                 f'<meta property="og:image" content="{SITE_URL}og.png?v={datetime.now():%Y%m%d}">'
-                 '<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">'
-                 '<meta name="twitter:card" content="summary_large_image">'
+                 # small square image -> WhatsApp shows a compact preview instead of a big banner
+                 f'<meta property="og:image" content="{SITE_URL}icon-192.png">'
+                 '<meta property="og:image:width" content="192"><meta property="og:image:height" content="192">'
+                 '<meta name="twitter:card" content="summary">'
                  '<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>'
                  '<link rel="stylesheet" href="social.css"></head><body>'
                  + page + '<script type="module" src="social.js"></script></body></html>')
         (ROOT / "site" / "index.html").write_text(index, encoding="utf-8")
-        make_og(out_events, ROOT / "site" / "og.png")
         (ROOT / "site" / "pogo.ics").write_bytes(ics_text(out_events).encode("utf-8"))
         print(f"Wrote site/index.html + {out.name} ({out.stat().st_size // 1024} KB) + {len(used)} images: {len(out_events)} events, {len(bosses)} bosses")
         return
