@@ -58,6 +58,35 @@ dlg.querySelector("#nameform").addEventListener("submit", ev => {
 });
 const needName = fn => (me ? fn() : askName(fn));
 
+// ---------- WhatsApp share text
+const EMOJI = {
+  "community-day": "🌟", "pokemon-spotlight-hour": "🔦", "raid-hour": "⚔️", "raid-day": "⚔️",
+  "max-battles": "💥", "max-mondays": "💥", "event": "🎉", "wild-area": "🗺️", "pokemon-go-tour": "🎫",
+};
+const fmtWhen = (s, e) => {
+  const a = new Date(s), b = new Date(e);
+  const day = d => d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  const tm = d => d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).replace(":00", "");
+  return a.toDateString() === new Date(b - 1).toDateString() ? `${day(a)}, ${tm(a)}–${tm(b)}` : `${day(a)} – ${day(b)}`;
+};
+function shareText(id) {
+  const e = (window.DATA_EVENTS || []).find(x => x.id === id);
+  if (!e) return location.href;
+  const lines = [`${EMOJI[e.type] || "📅"} ${e.name}`, fmtWhen(e.start, e.end)];
+  for (const m of (e.mons || []).slice(0, 3)) {
+    lines.push(`${m.name}${m.cp20 ? ` · 100% ${m.cp20}${m.cp25 ? ` / boosted ${m.cp25}` : ""}` : ""}${m.shiny ? " ✨" : ""}`);
+  }
+  const names = going.get(id) || [];
+  if (names.length) lines.push(`Going: ${names.join(", ")}`);
+  for (const m of meetups.filter(x => x.eventId === id)) {
+    const n = (m.plus || []).length;
+    lines.push(`📍 Meetup: ${m.when}${m.place ? " @ " + m.place : ""} (${m.by}${n ? " +" + n : ""})`);
+  }
+  lines.push("", `Who's in? 👉 ${location.origin}${location.pathname}`);
+  return lines.join("\n");
+}
+const waLink = id => "https://wa.me/?text=" + encodeURIComponent(shareText(id));
+
 // ---------- render into every .social slot
 function socialHtml(id) {
   if (failed) return `<div class="soc-note">Can't load who's going right now${failCode ? ` (${esc(failCode)})` : ""}.
@@ -69,6 +98,7 @@ function socialHtml(id) {
   let h = `<div class="goingrow">
     <button class="gobtn${mine ? " on" : ""}" data-act="go" data-ev="${esc(id)}" aria-pressed="${mine}">${mine ? "✓ Going" : "I'm going"}</button>
     <span class="who">${names.length ? names.map(n => n === me ? `<b>${esc(n)}</b>` : esc(n)).join(", ") : "No one yet"}</span>
+    <a class="wabtn" href="${esc(waLink(id))}" target="_blank" rel="noopener" aria-label="Share to WhatsApp">Share</a>
   </div>`;
   for (const m of ms) {
     const plus = m.plus || [];

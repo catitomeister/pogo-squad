@@ -247,6 +247,7 @@ const chip = (t, extra = "") => `<span class="type" style="--t:${TYPE_COLOR[t] |
 
 // ---------- data
 const EVENTS = DATA.events.filter(e => e.start && e.end);
+window.DATA_EVENTS = EVENTS;  // read by the website's share button
 const BOSSES = DATA.bosses;
 let weekStart = mondayOf(new Date());
 let showPast = false;

@@ -22,7 +22,7 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).parent
 SD = "https://raw.githubusercontent.com/bigfoott/ScrapedDuck/data/{}.min.json"
@@ -150,6 +150,49 @@ def region_label(region, name):
     place = re.split(r":| - ", name)[-1]
     place = re.sub(r"\b20\d\d\b", "", place).strip(" •-")
     return place or region
+
+
+SITE_URL = "https://catitomeister.github.io/pogo-squad/"
+OG_DESC = "This week's Pokémon GO events, hundo CPs, raid weaknesses and who's going."
+
+
+def _font(size, bold=True):
+    for f in (["C:/Windows/Fonts/segoeuib.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"] if bold else
+              ["C:/Windows/Fonts/segoeui.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"]):
+        try:
+            return ImageFont.truetype(f, size)
+        except OSError:
+            pass
+    return ImageFont.load_default()
+
+
+def make_og(events, path):
+    """1200x630 link-preview image: brand + this week's highlights (Mon–Sun, local build date)."""
+    today = datetime.now().date()
+    ws = today - timedelta(days=today.weekday())
+    we = ws + timedelta(days=7)
+    skip = {"go-battle-league", "go-pass", "season", "research", "twitch-drops"}
+    picks = []
+    for e in sorted(events, key=lambda x: x["start"] or ""):
+        if not e["start"] or e["type"] in skip or e.get("region"):
+            continue
+        d = datetime.fromisoformat(e["start"][:19]).date()
+        if ws <= d < we:
+            picks.append((d, e["name"]))
+    im = Image.new("RGB", (1200, 630), "#d93a1e")
+    dr = ImageDraw.Draw(im)
+    dr.text((70, 60), "POGO Squad", font=_font(92), fill="white")
+    dr.text((74, 175), f"This week · {ws:%b} {ws.day} – {(we - timedelta(days=1)):%b} {(we - timedelta(days=1)).day}",
+            font=_font(40, False), fill="#ffe3db")
+    y = 260
+    for d, name in picks[:5]:
+        name = name if len(name) <= 40 else name[:38] + "…"
+        dr.text((74, y), f"{d:%a}", font=_font(38), fill="#ffe3db")
+        dr.text((190, y), name, font=_font(38), fill="white")
+        y += 64
+    if not picks:
+        dr.text((74, y), "Events, hundo CPs, raid weaknesses", font=_font(38), fill="white")
+    im.save(path, "PNG", optimize=True)
 
 
 def icon_quiet(url):
@@ -332,10 +375,20 @@ def main():
                  '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
                  '<meta name="theme-color" content="#d93a1e"><link rel="manifest" href="manifest.json">'
                  '<link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon-180.png">'
+                 # Link preview (WhatsApp, iMessage, etc.)
+                 f'<meta name="description" content="{OG_DESC}">'
+                 '<meta property="og:type" content="website"><meta property="og:site_name" content="POGO Squad">'
+                 '<meta property="og:title" content="POGO Squad · This week">'
+                 f'<meta property="og:description" content="{OG_DESC}">'
+                 f'<meta property="og:url" content="{SITE_URL}">'
+                 f'<meta property="og:image" content="{SITE_URL}og.png?v={datetime.now():%Y%m%d}">'
+                 '<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">'
+                 '<meta name="twitter:card" content="summary_large_image">'
                  '<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>'
                  '<link rel="stylesheet" href="social.css"></head><body>'
                  + page + '<script type="module" src="social.js"></script></body></html>')
         (ROOT / "site" / "index.html").write_text(index, encoding="utf-8")
+        make_og(out_events, ROOT / "site" / "og.png")
         print(f"Wrote site/index.html + {out.name} ({out.stat().st_size // 1024} KB) + {len(used)} images: {len(out_events)} events, {len(bosses)} bosses")
         return
     tpl = (ROOT / "template.html").read_text(encoding="utf-8")
