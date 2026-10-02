@@ -14,7 +14,15 @@ const db = getFirestore(app);
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const NAME_KEY = "pogo.name";
-let me = (() => { try { return localStorage.getItem(NAME_KEY) || ""; } catch { return ""; } })();
+// The squad. People pick their name from this list (no typing), so names can't drift or duplicate.
+const FRIENDS = ["ShoBaoBao", "Bonkechu", "Brian", "Jen", "Eric", "Ethan", "Jackie", "Karina"];
+const LABELS = { ShoBaoBao: "ShoBaoBao (Cat)" };
+const ALIASES = { cat: "ShoBaoBao" };  // old free-typed names -> list name (case-insensitive)
+const canonical = n => {
+  const k = String(n || "").trim().toLowerCase();
+  return FRIENDS.find(f => f.toLowerCase() === k) || ALIASES[k] || "";
+};
+let me = (() => { try { return canonical(localStorage.getItem(NAME_KEY)); } catch { return ""; } })();
 let ready = false, failed = false, failCode = "";
 const going = new Map();   // eventId -> [names]
 let meetups = [];          // {id, eventId, when, place, by, plus: []}
@@ -30,37 +38,49 @@ header.insertBefore(chip, header.querySelector(".tabs"));
 const dlg = document.createElement("dialog");
 dlg.className = "namedlg";
 dlg.innerHTML = `<form method="dialog" id="nameform">
-  <h3>What's your name?</h3>
-  <p>Friends will see it when you mark an event or suggest a meetup.</p>
-  <input id="namein" maxlength="24" autocomplete="nickname" placeholder="e.g. Cathy" required>
-  <div class="dlgbtns"><button type="button" id="namecancel">Cancel</button><button type="submit" class="primary">Save</button></div>
+  <h3>Who are you?</h3>
+  <p></p>
+  <div class="pickgrid">${FRIENDS.map(f => `<button type="button" class="pick" data-pick="${esc(f)}">${esc(LABELS[f] || f)}</button>`).join("")}</div>
+  <p class="soc-note">Not on the list? Ask Cat to add you.</p>
+  <div class="dlgbtns"><button type="button" id="namecancel">Cancel</button></div>
 </form>`;
 document.body.appendChild(dlg);
 function paintChip() { chip.textContent = me ? me : "Set name"; chip.title = me ? "Change your name" : "Set your name"; }
 paintChip();
 function askName(then) {
   pending = then || null;
-  dlg.querySelector("#namein").value = me;
   dlg.querySelector("p").textContent = me
-    ? `Your going marks, meetups and wishlist will move from “${me}” to the new name.`
-    : "Friends will see it when you mark an event or suggest a meetup.";
+    ? `You're ${LABELS[me] || me}. Pick a different name only if this isn't you.`
+    : "Tap your name. Friends will see it when you mark an event or join a meetup.";
+  dlg.querySelectorAll(".pick").forEach(b => b.classList.toggle("on", b.dataset.pick === me));
   dlg.showModal();
 }
 chip.onclick = () => askName();
 dlg.querySelector("#namecancel").onclick = () => { pending = null; dlg.close(); };
-dlg.querySelector("#nameform").addEventListener("submit", async ev => {
-  ev.preventDefault();
-  const v = dlg.querySelector("#namein").value.trim().slice(0, 24);
-  if (!v) return;
-  const old = me;
-  me = v;
+dlg.addEventListener("click", async ev => {
+  const b = ev.target.closest("[data-pick]");
+  if (!b) return;
+  me = b.dataset.pick;
   try { localStorage.setItem(NAME_KEY, me); } catch {}
   paintChip();
   dlg.close();
-  if (old && old !== me) await moveName(old, me).catch(report);
   const p = pending; pending = null;
   if (p) p(); else fill();
 });
+
+// One-time tidy-up: entries saved under names that aren't exactly on the list (e.g. "CAT", "bonkechu")
+// are merged into the matching list name. Safe to run from any device; it's a no-op once clean.
+let tidied = false, meetupsLoaded = false;
+async function tidyNames() {
+  if (tidied) return;
+  tidied = true;
+  const seen = new Set([...going.values(), ...wishes.values()].flat());
+  meetups.forEach(m => { seen.add(m.by); (m.plus || []).forEach(n => seen.add(n)); });
+  for (const n of seen) {
+    const c = canonical(n);
+    if (c && c !== n) await moveName(n, c).catch(e => console.error("tidy", e));
+  }
+}
 
 // Move everything recorded under one name to another (merging, never duplicating)
 async function moveName(from, to) {
@@ -317,10 +337,13 @@ onAuthStateChanged(auth, user => {
     for (const v of [...going.values(), ...wishes.values()]) v.sort((a, b) => a.localeCompare(b));
     ready = true; fill();
     if (wdlg.open) paintWishDlg();
+    if (meetupsLoaded) tidyNames();
   }, e => fail("rsvps", e));
   onSnapshot(collection(db, "meetups"), snap => {
     meetups = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    meetupsLoaded = true;
     fill();
+    if (ready) tidyNames();
   }, e => fail("meetups", e));
 });
 signInAnonymously(auth).catch(e => fail("sign-in", e));

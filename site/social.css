@@ -75,3 +75,6 @@
 .wishadd button { appearance: none; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); font: 700 0.9rem var(--f-body); padding: 7px 14px; border-radius: 999px; cursor: pointer; }
 .calsub { margin-top: 26px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; font-size: 0.92rem; line-height: 1.5; }
 .calsub a { color: var(--accent); font-weight: 700; }
+.pickgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.pick { appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 700 1rem var(--f-body); padding: 10px 8px; border-radius: 12px; cursor: pointer; }
+.pick.on { background: var(--accent); border-color: var(--accent); color: var(--surface); }
