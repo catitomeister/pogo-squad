@@ -26,7 +26,8 @@ let me = (() => { try { return canonical(localStorage.getItem(NAME_KEY)); } catc
 let ready = false, failed = false, failCode = "";
 const going = new Map();   // eventId -> [names]
 let meetups = [];          // {id, eventId, when, place, by, plus: []}
-let openForm = null;       // eventId whose "suggest meetup" form is open
+let openForm = null;       // eventId whose food-plan form is open
+let editing = null;        // id of the food plan being edited (null = posting a new one)
 const drafts = {};         // eventId -> {when, place}
 let pending = null;        // action to run after the name is set
 
@@ -190,7 +191,7 @@ function socialHtml(id) {
       <div class="mwhat">🍜 <b>${esc(m.when)}</b>${m.place ? ` · ${esc(m.place)}` : ""}</div>
       <div class="mmeta">👥 ${people.length} · ${people.map(n => n === me ? `<b>${esc(n)}</b>` : esc(n)).join(", ")}</div>
       <div class="mbtns">
-        ${m.by === me ? `<button data-act="del" data-id="${esc(m.id)}">Remove</button>`
+        ${m.by === me ? `<button data-act="edit" data-id="${esc(m.id)}" data-ev="${esc(id)}">Edit</button><button data-act="del" data-id="${esc(m.id)}">Remove</button>`
           : `<button class="${joined ? "on" : "join"}" data-act="plus" data-id="${esc(m.id)}" data-ev="${esc(id)}" aria-pressed="${joined}">${joined ? "✓ Joined" : "Join"}</button>`}
       </div>
     </div>`;
@@ -203,7 +204,7 @@ function socialHtml(id) {
         `<label><input type="radio" name="phase" value="${p}"${p === phase ? " checked" : ""}><span>${p} the event</span></label>`).join("")}</div>
       <input name="place" maxlength="60" placeholder="Where to eat, e.g. Dago Shave Ice" value="${esc(d.place || "")}" required>
       <input name="when" maxlength="28" placeholder="Time (optional), e.g. 5:30pm" value="${esc(d.when || "")}">
-      <div class="dlgbtns"><button type="button" data-act="cancelform" data-ev="${esc(id)}">Cancel</button><button type="submit" class="primary">Post</button></div>
+      <div class="dlgbtns"><button type="button" data-act="cancelform" data-ev="${esc(id)}">Cancel</button><button type="submit" class="primary">${editing ? "Save" : "Post"}</button></div>
     </form>`;
   } else {
     h += `<button class="linkish" data-act="openform" data-ev="${esc(id)}">🍜 Food before / after?</button>`;
@@ -232,8 +233,16 @@ document.addEventListener("click", ev => {
       else await setDoc(ref, { eventId: id, name: me, ts: serverTimestamp() });
     } catch (e) { report(e); }
   });
-  if (act === "openform") needName(() => { openForm = id; fill(); document.querySelector(`.meetform[data-ev="${CSS.escape(id)}"] input[name=place]`)?.focus(); });
-  if (act === "cancelform") { openForm = null; fill(); }
+  if (act === "openform") needName(() => { openForm = id; editing = null; delete drafts[id]; fill(); document.querySelector(`.meetform[data-ev="${CSS.escape(id)}"] input[name=place]`)?.focus(); });
+  if (act === "cancelform") { openForm = null; editing = null; delete drafts[id]; fill(); }
+  if (act === "edit") {
+    const m = meetups.find(x => x.id === mid); if (!m) return;
+    const mm = String(m.when).match(/^(Before|After)(?:\s*·\s*)?(.*)$/);
+    const rest = mm ? mm[2].trim() : "";
+    drafts[id] = { phase: mm ? mm[1] : "After", when: mm ? (rest === "event" ? "" : rest) : m.when, place: m.place || "" };
+    openForm = id; editing = mid; fill();
+    document.querySelector(`.meetform[data-ev="${CSS.escape(id)}"] input[name=place]`)?.focus();
+  }
   if (act === "retry") location.reload();
   if (act === "plus") needName(async () => {
     const m = meetups.find(x => x.id === mid); if (!m) return;
@@ -256,8 +265,15 @@ document.addEventListener("submit", async ev => {
   const when = (f.phase.value || "After") + (time ? " · " + time : "");
   const id = f.dataset.ev;
   try {
-    await addDoc(collection(db, "meetups"), { eventId: id, when, place, by: me, plus: [], ts: serverTimestamp() });
-    openForm = null; delete drafts[id];
+    const old = editing && meetups.find(x => x.id === editing);
+    const ref = await addDoc(collection(db, "meetups"), { eventId: id, when, place, by: me, plus: [], ts: serverTimestamp() });
+    if (old) {
+      // rules only allow changing the join list, so an edit re-posts the plan, keeps who joined, and removes the old one
+      const keep = (old.plus || []).filter(n => n !== me);
+      if (keep.length) await updateDoc(ref, { plus: keep });
+      await deleteDoc(doc(db, "meetups", old.id));
+    }
+    openForm = null; editing = null; delete drafts[id];
     document.activeElement?.blur();
     fill();
   } catch (e) { report(e); }
