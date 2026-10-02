@@ -168,7 +168,7 @@ function shareText(id) {
   for (const m of meetups.filter(x => x.eventId === id)) {
     lines.push(`🍜 ${m.when}${m.place ? " · " + m.place : ""}`);
   }
-  lines.push(`👉 ${location.origin}${location.pathname}`);
+  lines.push(`Who's in? 👉 ${location.origin}${location.pathname}`);
   return lines.join("\n");
 }
 const waLink = id => "https://wa.me/?text=" + encodeURIComponent(shareText(id));
