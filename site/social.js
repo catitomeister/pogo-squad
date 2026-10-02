@@ -4,7 +4,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, addDoc, updateDoc,
-  arrayUnion, arrayRemove, serverTimestamp,
+  arrayUnion, arrayRemove, serverTimestamp, query, where, Timestamp,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -292,7 +292,9 @@ function report(e) {
 // ---------- live data
 onAuthStateChanged(auth, user => {
   if (!user) return;
-  onSnapshot(collection(db, "rsvps"), snap => {
+  // only recent entries: old events never show, and this keeps daily reads far below the free quota
+  const since = Timestamp.fromMillis(Date.now() - 60 * 864e5);
+  onSnapshot(query(collection(db, "rsvps"), where("ts", ">=", since)), snap => {
     going.clear(); wishes.clear();
     snap.forEach(d => {
       const { eventId, name } = d.data();
@@ -304,7 +306,7 @@ onAuthStateChanged(auth, user => {
     ready = true; fill();
     if (meetupsLoaded) tidyNames();
   }, e => fail("rsvps", e));
-  onSnapshot(collection(db, "meetups"), snap => {
+  onSnapshot(query(collection(db, "meetups"), where("ts", ">=", since)), snap => {
     meetups = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     meetupsLoaded = true;
     fill();
