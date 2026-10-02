@@ -48,6 +48,10 @@ header.top {
 .top-inner { max-width: 860px; margin: 0 auto; padding-inline: 16px; padding-block: 8px 0; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
 .brand { white-space: nowrap; font: 800 1.3rem/1 var(--f-display); letter-spacing: -0.02em; padding-bottom: 9px; }
 .brand span { color: var(--accent); }
+.brand { display: flex; align-items: center; gap: 8px; }
+.brandmark { width: 30px; height: 30px; flex: none; border-radius: 50%; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .brandmark { box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.35); } }
+:root[data-theme="dark"] .brandmark { box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.35); }
 .tabs { display: flex; gap: 2px; }
 .tab { white-space: nowrap; appearance: none; border: 0; background: none; color: var(--muted); cursor: pointer; font-weight: 700; font-size: 0.98rem; padding: 4px 8px 8px; border-bottom: 3px solid transparent; }
 .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
@@ -160,7 +164,7 @@ footer a { color: var(--muted); }
 
 <header class="top">
   <div class="top-inner">
-    <div class="brand">POGO <span>Squad</span></div>
+    <div class="brand"><svg class="brandmark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><circle cx="256" cy="256" r="256" fill="#1b1b1b"/><rect x="163" y="109" width="42" height="305" fill="#ffffff"/><path d="M163 109H293.5A103.5 103.5 0 0 1 293.5 316H163ZM205 150V273H291.5A61.5 61.5 0 0 0 291.5 150Z" fill="#ffffff" fill-rule="evenodd"/><rect x="205" y="273" width="16" height="43" fill="#1b1b1b"/><circle cx="303" cy="188" r="17" fill="#d93a1e"/><circle cx="277" cy="222" r="17" fill="#d93a1e"/><circle cx="319" cy="228" r="17" fill="#d93a1e"/></svg>POGO <span>Squad</span></div>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="tab-week" aria-selected="true" aria-controls="view-week">Week</button>
       <button class="tab" role="tab" id="tab-raids" aria-selected="false" aria-controls="view-raids">Raids</button>

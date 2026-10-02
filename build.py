@@ -271,7 +271,16 @@ def make_og(events, path):
             picks.append((d, e["name"]))
     im = Image.new("RGB", (1200, 630), "#d93a1e")
     dr = ImageDraw.Draw(im)
-    dr.text((70, 60), "POGO Squad", font=_font(92), fill="white")
+    mark = ROOT / "site" / "logo-256.png"
+    x = 70
+    if mark.exists():
+        m = Image.open(mark).convert("RGBA").resize((112, 112), Image.LANCZOS)
+        ring = Image.new("RGBA", (124, 124), (0, 0, 0, 0))
+        ImageDraw.Draw(ring).ellipse((0, 0, 123, 123), fill="white")
+        im.paste(ring, (64, 58), ring)
+        im.paste(m, (70, 64), m)
+        x = 210
+    dr.text((x, 60), "POGO Squad", font=_font(92), fill="white")
     dr.text((74, 175), f"This week · {ws:%b} {ws.day} – {(we - timedelta(days=1)):%b} {(we - timedelta(days=1)).day}",
             font=_font(40, False), fill="#ffe3db")
     y = 260
