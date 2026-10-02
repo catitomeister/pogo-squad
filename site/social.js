@@ -15,7 +15,7 @@ const db = getFirestore(app);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const NAME_KEY = "pogo.name";
 let me = (() => { try { return localStorage.getItem(NAME_KEY) || ""; } catch { return ""; } })();
-let ready = false, failed = false;
+let ready = false, failed = false, failCode = "";
 const going = new Map();   // eventId -> [names]
 let meetups = [];          // {id, eventId, when, place, by, plus: []}
 let openForm = null;       // eventId whose "suggest meetup" form is open
@@ -60,7 +60,8 @@ const needName = fn => (me ? fn() : askName(fn));
 
 // ---------- render into every .social slot
 function socialHtml(id) {
-  if (failed) return `<div class="soc-note">Can't load who's going right now.</div>`;
+  if (failed) return `<div class="soc-note">Can't load who's going right now${failCode ? ` (${esc(failCode)})` : ""}.
+    <button class="linkish" data-act="retry">Retry</button></div>`;
   if (!ready) return `<div class="soc-note">Loading…</div>`;
   const names = going.get(id) || [];
   const mine = names.includes(me);
@@ -117,6 +118,7 @@ document.addEventListener("click", ev => {
   });
   if (act === "openform") needName(() => { openForm = id; fill(); document.querySelector(`.meetform[data-ev="${CSS.escape(id)}"] input`)?.focus(); });
   if (act === "cancelform") { openForm = null; fill(); }
+  if (act === "retry") location.reload();
   if (act === "plus") needName(async () => {
     const m = meetups.find(x => x.id === mid); if (!m) return;
     try { await updateDoc(doc(db, "meetups", mid), { plus: (m.plus || []).includes(me) ? arrayRemove(me) : arrayUnion(me) }); }
@@ -141,6 +143,12 @@ document.addEventListener("submit", async ev => {
     fill();
   } catch (e) { report(e); }
 });
+function fail(where, e) {
+  console.error(where, e);
+  failed = true;
+  failCode = `${where}: ${e && (e.code || e.name) || "error"}`;
+  fill();
+}
 function report(e) {
   console.error(e);
   alert("Couldn't save that. Check your connection and try again.");
@@ -158,11 +166,11 @@ onAuthStateChanged(auth, user => {
     });
     for (const v of going.values()) v.sort((a, b) => a.localeCompare(b));
     ready = true; fill();
-  }, e => { console.error(e); failed = true; fill(); });
+  }, e => fail("rsvps", e));
   onSnapshot(collection(db, "meetups"), snap => {
     meetups = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     fill();
-  }, e => console.error(e));
+  }, e => fail("meetups", e));
 });
-signInAnonymously(auth).catch(e => { console.error(e); failed = true; fill(); });
+signInAnonymously(auth).catch(e => fail("sign-in", e));
 fill();
