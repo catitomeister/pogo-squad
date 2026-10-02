@@ -58,6 +58,86 @@ dlg.querySelector("#nameform").addEventListener("submit", ev => {
 });
 const needName = fn => (me ? fn() : askName(fn));
 
+// ---------- shiny wishlist (stored as rsvps with eventId "wish__<Pokémon>", so the existing rules cover it)
+const WISH = "wish__";
+const wishes = new Map();  // Pokémon name -> [people]
+const allMons = [...new Set([
+  ...(window.DATA_EVENTS || []).flatMap(e => (e.mons || []).map(m => m.name)),
+  ...((window.DATA_ALL || {}).bosses || []).map(b => b.name.replace(/^(Shadow|Mega) /, "")),
+  ...((window.DATA_ALL || {}).research || []).flatMap(r => r.rewards.filter(w => w.cp).map(w => w.name)),
+])].sort();
+const wishBtn = document.createElement("button");
+wishBtn.className = "mechip wishchip";
+wishBtn.textContent = "✦ Wishlist";
+wishBtn.title = "Your shiny wishlist";
+header.insertBefore(wishBtn, chip);
+const wdlg = document.createElement("dialog");
+wdlg.className = "namedlg";
+document.body.appendChild(wdlg);
+function myWishes() { return [...wishes].filter(([, ns]) => ns.includes(me)).map(([m]) => m).sort(); }
+function paintWishDlg() {
+  const mine = myWishes();
+  wdlg.innerHTML = `<form id="wishform">
+    <h3>Shiny wishlist</h3>
+    <p>Friends see “wanted by ${esc(me)}” on events where these show up.</p>
+    <div class="wishes">${mine.length ? mine.map(m => `<button type="button" class="wish" data-wish="${esc(m)}" aria-label="Remove ${esc(m)}">${esc(m)} ✕</button>`).join("") : `<span class="soc-note">Nothing yet.</span>`}</div>
+    <div class="wishadd"><input id="wishin" list="monlist" maxlength="40" placeholder="Add a Pokémon, e.g. Zorua"><button type="submit" class="primary">Add</button></div>
+    <datalist id="monlist">${allMons.map(m => `<option value="${esc(m)}">`).join("")}</datalist>
+    <div class="dlgbtns"><button type="button" id="wishdone">Done</button></div>
+  </form>`;
+}
+wishBtn.onclick = () => needName(() => { paintWishDlg(); wdlg.showModal(); });
+wdlg.addEventListener("click", async ev => {
+  if (ev.target.id === "wishdone") return wdlg.close();
+  const w = ev.target.closest("[data-wish]");
+  if (w) { await deleteDoc(doc(db, "rsvps", rsvpId(WISH + w.dataset.wish, me))).catch(report); }
+});
+wdlg.addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const v = wdlg.querySelector("#wishin").value.trim().slice(0, 40);
+  if (!v) return;
+  const name = allMons.find(m => m.toLowerCase() === v.toLowerCase()) || v;
+  await setDoc(doc(db, "rsvps", rsvpId(WISH + name, me)), { eventId: WISH + name, name: me, ts: serverTimestamp() }).catch(report);
+});
+function wantedHtml(id) {
+  const e = (window.DATA_EVENTS || []).find(x => x.id === id);
+  if (!e) return "";
+  const lines = (e.mons || []).map(m => {
+    const base = m.name.replace(/^(Shadow|Mega) /, "");
+    const ns = wishes.get(m.name) || wishes.get(base) || [];
+    return ns.length ? `<div class="wanted">✦ Shiny ${esc(base)} wanted by ${ns.map(n => n === me ? "<b>you</b>" : esc(n)).join(", ")}</div>` : "";
+  });
+  return lines.join("");
+}
+
+// ---------- calendar: one event as an .ics file, or subscribe to the whole feed
+function icsFor(e) {
+  const f = s => s.slice(0, 19).replace(/[-:]/g, "") + (s.endsWith("Z") ? "Z" : "");
+  const t = s => s.replace(/[\\;,]/g, c => "\\" + c);
+  return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//POGO Squad//EN", "BEGIN:VEVENT",
+    `UID:${e.id}@pogo-squad`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").slice(0, 15)}Z`,
+    `DTSTART:${f(e.start)}`, `DTEND:${f(e.end)}`, `SUMMARY:${t(e.name)}`, `URL:${e.link}`,
+    "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+}
+document.addEventListener("click", ev => {
+  const a = ev.target.closest("[data-cal]");
+  if (!a) return;
+  ev.preventDefault();
+  const e = (window.DATA_EVENTS || []).find(x => x.id === a.dataset.cal);
+  if (!e) return;
+  const url = URL.createObjectURL(new Blob([icsFor(e)], { type: "text/calendar" }));
+  const link = Object.assign(document.createElement("a"), { href: url, download: `${e.id}.ics` });
+  document.body.appendChild(link); link.click(); link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+});
+const feed = new URL("pogo.ics", location.href);
+const sub = document.createElement("div");
+sub.className = "calsub";
+sub.innerHTML = `<b>📅 Add every event to your calendar</b> (updates itself):
+  <a href="webcal://${feed.host}${feed.pathname}">iPhone / Mac</a> ·
+  <a href="https://calendar.google.com/calendar/r?cid=${encodeURIComponent("webcal://" + feed.host + feed.pathname)}" target="_blank" rel="noopener">Google Calendar</a>`;
+document.getElementById("foot")?.before(sub);
+
 // ---------- WhatsApp share text
 const EMOJI = {
   "community-day": "🌟", "pokemon-spotlight-hour": "🔦", "raid-hour": "⚔️", "raid-day": "⚔️",
@@ -98,17 +178,19 @@ function socialHtml(id) {
   let h = `<div class="goingrow">
     <button class="gobtn${mine ? " on" : ""}" data-act="go" data-ev="${esc(id)}" aria-pressed="${mine}">${mine ? "✓ Going" : "I'm going"}</button>
     <span class="who">${names.length ? names.map(n => n === me ? `<b>${esc(n)}</b>` : esc(n)).join(", ") : "No one yet"}</span>
-    <a class="wabtn" href="${esc(waLink(id))}" target="_blank" rel="noopener" aria-label="Share to WhatsApp">Share</a>
+    <span class="acts"><a class="calbtn" href="#" data-cal="${esc(id)}" aria-label="Add to calendar" title="Add to calendar">📅</a>
+    <a class="wabtn" href="${esc(waLink(id))}" target="_blank" rel="noopener" aria-label="Share to WhatsApp">Share</a></span>
   </div>`;
+  h = wantedHtml(id) + h;
   for (const m of ms) {
-    const plus = m.plus || [];
-    const iPlus = plus.includes(me);
+    const people = [m.by, ...(m.plus || []).filter(n => n !== m.by)];
+    const joined = people.includes(me);
     h += `<div class="meet">
-      <div class="mwhat"><b>${esc(m.when)}</b>${m.place ? ` · ${esc(m.place)}` : ""}</div>
-      <div class="mmeta">by ${esc(m.by)}${plus.length ? ` · +1 ${plus.map(esc).join(", ")}` : ""}</div>
+      <div class="mwhat">📍 <b>${esc(m.when)}</b>${m.place ? ` · ${esc(m.place)}` : ""}</div>
+      <div class="mmeta">👥 ${people.length} · ${people.map(n => n === me ? `<b>${esc(n)}</b>` : esc(n)).join(", ")}</div>
       <div class="mbtns">
         ${m.by === me ? `<button data-act="del" data-id="${esc(m.id)}">Remove</button>`
-          : `<button class="${iPlus ? "on" : ""}" data-act="plus" data-id="${esc(m.id)}" aria-pressed="${iPlus}">${iPlus ? "✓ +1" : "+1"}</button>`}
+          : `<button class="${joined ? "on" : "join"}" data-act="plus" data-id="${esc(m.id)}" data-ev="${esc(id)}" aria-pressed="${joined}">${joined ? "✓ Joined" : "Join"}</button>`}
       </div>
     </div>`;
   }
@@ -151,8 +233,14 @@ document.addEventListener("click", ev => {
   if (act === "retry") location.reload();
   if (act === "plus") needName(async () => {
     const m = meetups.find(x => x.id === mid); if (!m) return;
-    try { await updateDoc(doc(db, "meetups", mid), { plus: (m.plus || []).includes(me) ? arrayRemove(me) : arrayUnion(me) }); }
-    catch (e) { report(e); }
+    const joining = !(m.plus || []).includes(me);
+    try {
+      await updateDoc(doc(db, "meetups", mid), { plus: joining ? arrayUnion(me) : arrayRemove(me) });
+      // joining a meetup also marks you as going to the event
+      if (joining && !(going.get(m.eventId) || []).includes(me)) {
+        await setDoc(doc(db, "rsvps", rsvpId(m.eventId, me)), { eventId: m.eventId, name: me, ts: serverTimestamp() });
+      }
+    } catch (e) { report(e); }
   });
   if (act === "del") deleteDoc(doc(db, "meetups", mid)).catch(report);
 });
@@ -188,14 +276,16 @@ function report(e) {
 onAuthStateChanged(auth, user => {
   if (!user) return;
   onSnapshot(collection(db, "rsvps"), snap => {
-    going.clear();
+    going.clear(); wishes.clear();
     snap.forEach(d => {
       const { eventId, name } = d.data();
-      if (!going.has(eventId)) going.set(eventId, []);
-      going.get(eventId).push(name);
+      const [map, key] = eventId.startsWith(WISH) ? [wishes, eventId.slice(WISH.length)] : [going, eventId];
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(name);
     });
-    for (const v of going.values()) v.sort((a, b) => a.localeCompare(b));
+    for (const v of [...going.values(), ...wishes.values()]) v.sort((a, b) => a.localeCompare(b));
     ready = true; fill();
+    if (wdlg.open) paintWishDlg();
   }, e => fail("rsvps", e));
   onSnapshot(collection(db, "meetups"), snap => {
     meetups = snap.docs.map(d => ({ id: d.id, ...d.data() }));

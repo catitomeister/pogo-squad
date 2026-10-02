@@ -152,6 +152,92 @@ def region_label(region, name):
     return place or region
 
 
+HUB = "https://db.pokemongohub.net"
+
+
+def hub_slug(name, pid):
+    """Pokémon GO Hub DB slug: 'Mega Charizard X' -> '6-Mega_X', 'Giratina (Origin)' -> '487-Origin'."""
+    n = re.sub(r"^Shadow\s+", "", name)
+    m = re.match(r"(Mega|Primal)\s+.+?(?:\s+([XY]))?$", n)
+    if m:
+        return f"{pid}-{m.group(1)}" + (f"_{m.group(2)}" if m.group(2) else "")
+    m = re.search(r"\((\w+)", n)
+    if m:
+        return f"{pid}-{m.group(1)}"
+    for prefix, f in (("Alolan ", "Alola"), ("Galarian ", "Galarian"), ("Hisuian ", "Hisuian"), ("Paldean ", "Paldea")):
+        if n.startswith(prefix):
+            return f"{pid}-{f}"
+    return str(pid)
+
+
+_counter_cache = {}
+
+
+def hub_counters(name, pid, keep=6):
+    """Top raid counters, in Pokémon GO Hub's own ranking order."""
+    if not pid:
+        return []
+    slug = hub_slug(name, pid)
+    if slug in _counter_cache:
+        return _counter_cache[slug]
+    out = []
+    try:
+        req = urllib.request.Request(f"{HUB}/pokemon/{slug}/counters", headers={"User-Agent": "Mozilla/5.0 pogo-squad-build"})
+        with urlopen(req, timeout=45) as r:
+            t = r.read().decode("utf-8", "replace")
+        for _, row in re.findall(r"<tr><td>(\d+)\.</td>(.*?)</tr>", t, re.S):
+            nm = re.search(r'<img alt="(.*?) Pokémon GO"', row)
+            img = re.search(r'src="(/images/official/thumb/[^"]+)"', row)
+            moves = re.findall(r'title="Opens (.*?) page with details', row)
+            if not nm or len(moves) < 2:
+                continue
+            cname = html.unescape(nm.group(1))
+            out.append({"name": cname.replace(" Forme)", ")"), "fast": html.unescape(moves[0]).rstrip("+* "),
+                        "charged": html.unescape(moves[1]).rstrip("+* "),
+                        "icon": icon(HUB + img.group(1)) if img else None})
+            if len(out) >= keep:
+                break
+    except Exception as e:
+        print("  counters failed:", slug, e)
+    _counter_cache[slug] = out
+    return out
+
+
+def ics_text(events):
+    """iCalendar feed. LeekDuck local times become floating times (same clock time in every time zone)."""
+    skip = {"go-battle-league", "go-pass", "season", "research", "twitch-drops"}
+    now = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    esc = lambda s: s.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n")
+    def stamp(s):
+        if s.endswith("Z"):
+            return datetime.fromisoformat(s[:19]).strftime("%Y%m%dT%H%M%S") + "Z"
+        return datetime.fromisoformat(s[:19]).strftime("%Y%m%dT%H%M%S")
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//POGO Squad//EN", "CALSCALE:GREGORIAN",
+             "X-WR-CALNAME:POGO Squad", "REFRESH-INTERVAL;VALUE=DURATION:PT12H", "X-PUBLISHED-TTL:PT12H"]
+    for e in events:
+        if not e["start"] or not e["end"] or e["type"] in skip or e.get("region"):
+            continue
+        desc = [", ".join(m["name"] + (f" (100% {m['cp20']})" if m.get("cp20") else "") for m in e["mons"][:3])] if e["mons"] else []
+        desc += [e["evolve"]] if e.get("evolve") else []
+        desc += e.get("remote", []) + e["bonuses"][:3] + [e["link"]]
+        lines += ["BEGIN:VEVENT", f"UID:{e['id']}@pogo-squad", f"DTSTAMP:{now}",
+                  f"DTSTART:{stamp(e['start'])}", f"DTEND:{stamp(e['end'])}",
+                  f"SUMMARY:{esc(e['name'])}", f"DESCRIPTION:{esc(chr(10).join(d for d in desc if d))}",
+                  f"URL:{e['link']}", "END:VEVENT"]
+    lines.append("END:VCALENDAR")
+    folded = []
+    for ln in lines:  # RFC 5545 line folding at 75 octets
+        b = ln.encode("utf-8")
+        while len(b) > 75:
+            cut = 75
+            while (b[cut] & 0xC0) == 0x80:
+                cut -= 1
+            folded.append(b[:cut].decode("utf-8"))
+            b = b" " + b[cut:]
+        folded.append(b.decode("utf-8"))
+    return "\r\n".join(folded) + "\r\n"
+
+
 SITE_URL = "https://catitomeister.github.io/pogo-squad/"
 OG_DESC = "This week's Pokémon GO events, hundo CPs, raid weaknesses and who's going."
 
@@ -286,7 +372,7 @@ def main():
             "cp25": r["combatPower"]["boosted"]["max"],
             "weather": [w["name"] for w in r["boostedWeather"]],
             "icon": icon(r["image"]),
-            "start": None, "end": None, "current": True,
+            "start": None, "end": None, "current": True, "pid": st["pokemon_id"] if st else None,
         })
         seen.add(r["name"].lower())
 
@@ -304,7 +390,7 @@ def main():
                 "name": name, "tier": tier, "types": ty or [], "shiny": b.get("canBeShiny", False),
                 "cp20": hundo(st, 20) if st else None, "cp25": hundo(st, 25) if st else None,
                 "weather": None, "icon": icon(b.get("image")),
-                "start": e["start"], "end": e["end"], "current": False,
+                "start": e["start"], "end": e["end"], "current": False, "pid": st["pokemon_id"] if st else None,
             }
             if key in seen:  # already in current list: just attach the window
                 for x in bosses:
@@ -315,6 +401,21 @@ def main():
                 print("  no stats for", b["name"])
             seen.add(key)
             bosses.append(entry)
+
+    # Top counters (Pokémon GO Hub) for the bosses people plan around: 5-star, Shadow 5-star, Mega
+    for b in bosses:
+        if b["tier"] in ("5-Star", "Mega"):
+            b["counters"] = hub_counters(b["name"], b.pop("pid", None))
+        else:
+            b.pop("pid", None)
+
+    # ---- Current field research, grouped by task type
+    research = []
+    for r in get_json(SD.format("research")):
+        rewards = [{"name": w["name"], "shiny": w.get("canBeShiny", False), "icon": icon(w.get("image")),
+                    "cp": (w.get("combatPower") or {}).get("max")} for w in r["rewards"]]
+        research.append({"task": re.sub(r"<[^>]+>", "", r["text"]).strip(), "type": r.get("type") or "event",
+                         "rewards": rewards})
 
     # ---- Events: keep anything that hasn't ended more than a day ago
     out_events = []
@@ -360,6 +461,7 @@ def main():
         "built": datetime.now(timezone.utc).isoformat(timespec="minutes"),
         "events": out_events,
         "bosses": bosses,
+        "research": research,
     }
     if SITE:
         out = ROOT / "site" / "data.json"
@@ -389,6 +491,7 @@ def main():
                  + page + '<script type="module" src="social.js"></script></body></html>')
         (ROOT / "site" / "index.html").write_text(index, encoding="utf-8")
         make_og(out_events, ROOT / "site" / "og.png")
+        (ROOT / "site" / "pogo.ics").write_bytes(ics_text(out_events).encode("utf-8"))
         print(f"Wrote site/index.html + {out.name} ({out.stat().st_size // 1024} KB) + {len(used)} images: {len(out_events)} events, {len(bosses)} bosses")
         return
     tpl = (ROOT / "template.html").read_text(encoding="utf-8")

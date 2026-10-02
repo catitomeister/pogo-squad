@@ -137,6 +137,26 @@ header.top {
 .tierlabel { font: 700 0.7rem var(--f-body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 16px 0 8px; }
 
 .social:empty { display: none; }
+.ctr { margin-top: 6px; }
+.ctr summary { cursor: pointer; color: var(--accent); font-weight: 700; font-size: 0.9rem; padding: 4px 0; }
+.ctrgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap: 6px; margin-top: 4px; }
+.ctrc { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 6px; align-items: center; background: var(--chip); border-radius: 10px; padding: 4px 8px 4px 4px; }
+.ctrc img { width: 36px; height: 36px; object-fit: contain; }
+.ctrc b { display: block; font-size: 0.82rem; line-height: 1.2; }
+.ctrc span { display: block; font-size: 0.72rem; color: var(--muted); line-height: 1.25; }
+.ctrsrc { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+.ctrsrc a { color: var(--muted); }
+.todo { margin-top: 4px; background: var(--chip); border-radius: 12px; padding: 6px 10px; }
+.todo summary { cursor: pointer; font-weight: 700; font-size: 0.9rem; }
+.todo label { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 6px; align-items: start; font-size: 0.92rem; padding: 4px 0; cursor: pointer; }
+.todo input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--live); }
+.todo input:checked + span { text-decoration: line-through; color: var(--muted); }
+.rtasks { display: grid; gap: 6px; }
+.rtask { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; display: grid; gap: 4px; }
+.rtext { font-weight: 700; font-size: 0.98rem; }
+.rrew { display: flex; flex-wrap: wrap; gap: 2px 10px; }
+.rmon { display: inline-flex; align-items: center; gap: 2px; font-size: 0.85rem; color: var(--muted); }
+.rmon img { width: 32px; height: 32px; object-fit: contain; }
 .also { margin-top: 26px; font-size: 0.82rem; color: var(--muted); display: grid; gap: 4px; }
 .also a { color: var(--ink); font-weight: 700; text-decoration: none; }
 footer { margin-top: 32px; font-size: 0.76rem; color: var(--muted); }
@@ -149,6 +169,7 @@ footer a { color: var(--muted); }
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="tab-week" aria-selected="true" aria-controls="view-week">Week</button>
       <button class="tab" role="tab" id="tab-raids" aria-selected="false" aria-controls="view-raids">Raids</button>
+      <button class="tab" role="tab" id="tab-research" aria-selected="false" aria-controls="view-research">Research</button>
     </div>
   </div>
 </header>
@@ -156,6 +177,7 @@ footer a { color: var(--muted); }
 <main class="wrap">
   <section id="view-week" role="tabpanel" aria-labelledby="tab-week"></section>
   <section id="view-raids" role="tabpanel" aria-labelledby="tab-raids" hidden></section>
+  <section id="view-research" role="tabpanel" aria-labelledby="tab-research" hidden></section>
   <footer id="foot"></footer>
 </main>
 
@@ -247,7 +269,8 @@ const chip = (t, extra = "") => `<span class="type" style="--t:${TYPE_COLOR[t] |
 
 // ---------- data
 const EVENTS = DATA.events.filter(e => e.start && e.end);
-window.DATA_EVENTS = EVENTS;  // read by the website's share button
+window.DATA_EVENTS = EVENTS;  // read by the website's social layer
+window.DATA_ALL = DATA;
 const BOSSES = DATA.bosses;
 let weekStart = mondayOf(new Date());
 let showPast = false;
@@ -274,6 +297,49 @@ function shortEvolve(s) {
           .replace(/ that knows the (Fast|Charged) Attacks? /i, " with ");
 }
 const shortBonus = b => b.length > 70 ? b.slice(0, 68).replace(/\s+\S*$/, "") + "…" : b;
+
+// ---------- personal to-do checklist (built from the event's facts; ticks stay on this device)
+function checklistItems(e) {
+  const items = [];
+  const end = dt(e.end);
+  if (e.evolve) {
+    const m = e.evolve.match(/Evolve (.+?) during .*?(\w+) hours? afterwards? to get an? (.+?) that knows the (?:Fast|Charged) Attacks? (.+)$/i);
+    const hrs = m ? ({ one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 }[m[2].toLowerCase()] || parseInt(m[2]) || 0) : 0;
+    items.push(m ? `Evolve ${m[1]} → ${m[3]} (${m[4]}) by ${fmtTime(new Date(+end + hrs * 3600e3))}` : e.evolve);
+  }
+  if (e.type === "community-day") items.push("Pop a Lucky Egg + Star Piece");
+  (e.remote || []).forEach(r => items.push(r));
+  for (const b of e.bonuses || []) {
+    if (/trade|stardust/i.test(b) && /trade/i.test(b)) items.push(shortBonus(b.replace(/\*$/, "")));
+    else if (/Max Particle collection limit/i.test(b)) {
+      const n = (b.match(/to ([\d,]+)/) || [])[1];
+      items.push(n ? `Collect up to ${n} Max Particles` : shortBonus(b));
+    }
+  }
+  if (e.type === "max-battles") items.push("Save up Max Particles the day before");
+  if (e.type === "raid-hour" || e.type === "raid-day") items.push("Bring Raid Passes / Remote Raid Passes");
+  return items.slice(0, 5);
+}
+function checklistHtml(e) {
+  const items = checklistItems(e);
+  if (!items.length) return "";
+  const key = "pogo.todo." + e.id;
+  let done = [];
+  try { done = JSON.parse(localStorage.getItem(key) || "[]"); } catch {}
+  const n = items.filter((_, i) => done.includes(i)).length;
+  return `<details class="todo" data-key="${esc(key)}"${n && n < items.length ? " open" : ""}>
+    <summary>My checklist · ${n}/${items.length}</summary>
+    ${items.map((t, i) => `<label><input type="checkbox" data-i="${i}"${done.includes(i) ? " checked" : ""}> <span>${esc(t)}</span></label>`).join("")}
+  </details>`;
+}
+document.addEventListener("change", ev => {
+  const box = ev.target.closest(".todo input[type=checkbox]");
+  if (!box) return;
+  const d = box.closest(".todo");
+  const done = [...d.querySelectorAll("input:checked")].map(x => +x.dataset.i);
+  try { localStorage.setItem(d.dataset.key, JSON.stringify(done)); } catch {}
+  d.querySelector("summary").textContent = `My checklist · ${done.length}/${d.querySelectorAll("input").length}`;
+});
 
 // mode: "day" (single-day event), "week" (multi-day event), "raid" (raid rotation)
 function cardHtml(e, mode, now) {
@@ -314,6 +380,8 @@ function cardHtml(e, mode, now) {
       <div class="name"><a href="${esc(e.link)}" target="_blank" rel="noopener">${esc(e.name)}</a></div>
       ${e.mons && e.mons.length ? `<div class="mons">${e.mons.map(m => monHtml(m, battle)).join("")}</div>` : ""}
       ${facts.length ? `<ul class="facts">${facts.join("")}</ul>` : ""}
+      ${["raid-hour", "raid-day", "raid-battles"].includes(e.type) ? (e.mons || []).map(m => countersHtml(bossCounters(m.name))).join("") : ""}
+      ${mode !== "raid" && dt(e.end) > now ? checklistHtml(e) : ""}
       ${mode === "raid" ? "" : `<div class="social" data-ev="${esc(e.id)}"></div>`}
     </div>
   </article>`;
@@ -405,8 +473,22 @@ function bossHtml(b, showWindow) {
         ${dbl.length ? `<div class="weak-row dbl"><b>2× weak</b>${dbl.map(w => chip(w[0])).join("")}</div>` : ""}
         ${sgl.length ? `<div class="weak-row"><b>weak</b>${sgl.map(w => chip(w[0])).join("")}</div>` : ""}
       </div>
+      ${countersHtml(b.counters)}
     </div>
   </article>`;
+}
+// Top 6 raid counters from Pokémon GO Hub, collapsed by default
+function countersHtml(list) {
+  if (!list || !list.length) return "";
+  return `<details class="ctr"><summary>Top counters</summary><div class="ctrgrid">${list.map(c => `<div class="ctrc">
+      ${c.icon ? `<img src="${c.icon}" alt="" loading="lazy">` : ""}<div><b>${esc(c.name)}</b><span>${esc(c.fast)} · ${esc(c.charged)}</span></div>
+    </div>`).join("")}</div><div class="ctrsrc">Ranking: <a href="https://db.pokemongohub.net/" target="_blank" rel="noopener">Pokémon GO Hub</a></div></details>`;
+}
+// counters for a raid event's boss (event mon names drop the "Shadow"/"Mega" prefix sometimes)
+function bossCounters(monName) {
+  const n = monName.toLowerCase();
+  const b = BOSSES.find(x => x.counters && (x.name.toLowerCase() === n || x.name.toLowerCase().replace(/^shadow /, "") === n));
+  return b ? b.counters : null;
 }
 function bossesInWindow(a, b, now) {
   return BOSSES.filter(x => {
@@ -447,9 +529,29 @@ function renderRaids() {
   document.getElementById("view-raids").innerHTML = html;
 }
 
+// ---------- field research
+const RESEARCH_GROUPS = [
+  ["throw", "Throwing"], ["catch", "Catching"], ["battle", "Battle"], ["explore", "Exploring"],
+  ["training", "Training"], ["buddy", "Buddy and trading"], ["rocket", "Team GO Rocket"], ["event", "Event tasks"],
+];
+function renderResearch() {
+  const list = DATA.research || [];
+  let html = `<h2 class="sec">Current field research</h2><p class="sec-sub">Tasks from spinning PokéStops right now. Encounters show their max CP (100%).</p>`;
+  for (const [type, label] of RESEARCH_GROUPS) {
+    const tasks = list.filter(r => r.type === type);
+    if (!tasks.length) continue;
+    html += `<div class="tierlabel">${label}</div><div class="rtasks">${tasks.map(r => `<div class="rtask">
+      <div class="rtext">${esc(r.task)}</div>
+      <div class="rrew">${r.rewards.map(w => `<span class="rmon" title="${esc(w.name)}${w.cp ? " · 100% " + w.cp : ""}">${w.icon ? `<img src="${w.icon}" alt="">` : ""}<span>${esc(w.name)}${w.shiny ? " ✦" : ""}</span></span>`).join("")}</div>
+    </div>`).join("")}</div>`;
+  }
+  if (!list.length) html += `<p class="quiet">No field research data right now.</p>`;
+  document.getElementById("view-research").innerHTML = html;
+}
+
 // ---------- tabs & boot
 function setTab(which) {
-  for (const t of ["week", "raids"]) {
+  for (const t of ["week", "raids", "research"]) {
     document.getElementById("tab-" + t).setAttribute("aria-selected", String(t === which));
     document.getElementById("view-" + t).hidden = t !== which;
   }
@@ -457,6 +559,7 @@ function setTab(which) {
 }
 document.getElementById("tab-week").onclick = () => setTab("week");
 document.getElementById("tab-raids").onclick = () => setTab("raids");
+document.getElementById("tab-research").onclick = () => setTab("research");
 document.getElementById("foot").innerHTML =
   `Data updated ${fmtMD(new Date(DATA.built))} from <a href="https://leekduck.com/events/" target="_blank" rel="noopener">LeekDuck</a> via ` +
   `<a href="https://github.com/bigfoott/ScrapedDuck" target="_blank" rel="noopener">ScrapedDuck</a> (event images © Niantic / The Pokémon Company); base stats from pogoapi.net. ` +
@@ -465,7 +568,8 @@ document.getElementById("foot").innerHTML =
 
 renderWeek();
 renderRaids();
-setTab(location.hash === "#raids" ? "raids" : store.get("pogo.tab", "week"));
+renderResearch();
+setTab(["#raids", "#research"].includes(location.hash) ? location.hash.slice(1) : store.get("pogo.tab", "week"));
 // refresh countdowns, but never while someone is typing in a form
 setInterval(() => { if (!document.hidden && !document.activeElement?.closest("form")) renderWeek(); }, 60000);
 </script>

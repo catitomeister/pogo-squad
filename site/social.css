@@ -35,6 +35,7 @@
   appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
   font: 700 0.85rem var(--f-body); padding: 5px 12px; border-radius: 999px; cursor: pointer;
 }
+.mbtns button.join { background: var(--accent); border-color: var(--accent); color: var(--surface); padding: 6px 16px; font-size: 0.92rem; }
 .mbtns button.on { background: var(--live); border-color: var(--live); color: var(--surface); }
 .linkish { appearance: none; border: 0; background: none; color: var(--accent); font: 700 0.9rem var(--f-body); padding: 2px 0; cursor: pointer; justify-self: start; }
 
@@ -55,3 +56,22 @@
 .namedlg h3 { margin: 0 0 4px; font: 800 1.2rem var(--f-display); }
 .namedlg p { margin: 0 0 12px; color: var(--muted); font-size: 0.9rem; }
 .namedlg form { display: grid; gap: 10px; }
+
+/* header: on phones the tabs drop to their own row */
+.wishchip { margin-left: auto; }
+.wishchip + .mechip { margin-left: 6px; }
+@media (max-width: 520px) {
+  .top-inner { flex-wrap: wrap; row-gap: 0; }
+  .top-inner .tabs { order: 3; width: 100%; }
+  .mechip { margin-bottom: 0; }
+}
+.acts { display: inline-flex; gap: 6px; align-items: center; margin-left: auto; }
+.calbtn { text-decoration: none; font-size: 1.15rem; line-height: 1; padding: 4px 6px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); }
+.wanted { background: var(--accent-soft); color: var(--accent); border-radius: 10px; padding: 6px 10px; font-size: 0.88rem; font-weight: 700; }
+.wanted b { text-decoration: underline; }
+.wishes { display: flex; flex-wrap: wrap; gap: 6px; }
+.wish { appearance: none; border: 0; background: var(--accent-soft); color: var(--accent); font: 700 0.88rem var(--f-body); padding: 5px 10px; border-radius: 999px; cursor: pointer; }
+.wishadd { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+.wishadd button { appearance: none; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); font: 700 0.9rem var(--f-body); padding: 7px 14px; border-radius: 999px; cursor: pointer; }
+.calsub { margin-top: 26px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; font-size: 0.92rem; line-height: 1.5; }
+.calsub a { color: var(--accent); font-weight: 700; }
