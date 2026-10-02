@@ -119,7 +119,7 @@ function icsFor(e) {
   const t = s => s.replace(/[\\;,]/g, c => "\\" + c);
   return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//POGO Squad//EN", "BEGIN:VEVENT",
     `UID:${e.id}@pogo-squad`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").slice(0, 15)}Z`,
-    `DTSTART:${f(e.start)}`, `DTEND:${f(e.end)}`, `SUMMARY:${t(e.name)}`, `LOCATION:${t("The Shoppes at Chino Hills, 13920 City Center Dr, Chino Hills, CA 91709")}`, `DESCRIPTION:${t(e.link)}`,
+    `DTSTART:${f(e.start)}`, `DTEND:${f(e.end)}`, `SUMMARY:${t(e.name)}`, `LOCATION:${t("The Shoppes at Chino Hills, 13920 City Center Dr, Chino Hills, CA 91709")}`, `DESCRIPTION:${t(location.origin + location.pathname)}`,
     "END:VEVENT", "END:VCALENDAR"].join("\r\n");
 }
 document.addEventListener("click", ev => {

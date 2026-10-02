@@ -204,6 +204,24 @@ def hub_counters(name, pid, keep=6, slug=None, page="counters"):
     return out
 
 
+def leek_research_shinies():
+    """Names of research encounters LeekDuck marks 'Can be Shiny' (ScrapedDuck's flag is unreliable)."""
+    try:
+        req = urllib.request.Request("https://leekduck.com/research/", headers={"User-Agent": "Mozilla/5.0 pogo-squad-build"})
+        with urlopen(req, timeout=45) as r:
+            t = r.read().decode("utf-8", "replace")
+    except Exception as e:
+        print("  research page failed:", e)
+        return set()
+    names = set()
+    for li in re.findall(r'<li class="reward"[^>]*>(.*?)</li>', t, re.S):
+        if "shiny-badge" in li:
+            m = re.search(r'class="reward-label"><span>(.*?)</span>', li)
+            if m:
+                names.add(html.unescape(m.group(1)).strip())
+    return names
+
+
 ICS_LOCATION = "The Shoppes at Chino Hills, 13920 City Center Dr, Chino Hills, CA 91709"
 
 
@@ -223,7 +241,7 @@ def ics_text(events):
             continue
         desc = [", ".join(m["name"] + (f" (100% {m['cp20']})" if m.get("cp20") else "") for m in e["mons"][:3])] if e["mons"] else []
         desc += [e["evolve"]] if e.get("evolve") else []
-        desc += e.get("remote", []) + e["bonuses"][:3] + [e["link"]]
+        desc += e.get("remote", []) + e["bonuses"][:3] + [SITE_URL]
         lines += ["BEGIN:VEVENT", f"UID:{e['id']}@pogo-squad", f"DTSTAMP:{now}",
                   f"DTSTART:{stamp(e['start'])}", f"DTEND:{stamp(e['end'])}",
                   f"SUMMARY:{esc(e['name'])}", f"LOCATION:{esc(ICS_LOCATION)}", f"DESCRIPTION:{esc(chr(10).join(d for d in desc if d))}",
@@ -424,8 +442,9 @@ def main():
 
     # ---- Current field research, grouped by task type
     research = []
+    shinies = leek_research_shinies()
     for r in get_json(SD.format("research")):
-        rewards = [{"name": w["name"], "shiny": w.get("canBeShiny", False), "icon": icon(w.get("image")),
+        rewards = [{"name": w["name"], "shiny": w.get("canBeShiny", False) or w["name"] in shinies, "icon": icon(w.get("image")),
                     "cp": (w.get("combatPower") or {}).get("max")} for w in r["rewards"]]
         research.append({"task": re.sub(r"<[^>]+>", "", r["text"]).strip(), "type": r.get("type") or "event",
                          "rewards": rewards})

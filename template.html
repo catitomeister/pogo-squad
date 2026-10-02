@@ -508,7 +508,7 @@ function renderResearch() {
   let html = `<h2 class="sec">Event research</h2><p class="sec-sub">Event field research from PokéStops right now. Encounters show their max CP (100%).</p>`;
   html += tasks.length ? `<div class="rtasks">${tasks.map(r => `<div class="rtask">
       <div class="rtext">${esc(r.task)}</div>
-      <div class="rrew">${r.rewards.map(w => `<span class="rmon" title="${esc(w.name)}${w.cp ? " · 100% " + w.cp : ""}">${w.icon ? `<img src="${w.icon}" alt="">` : ""}<span>${esc(w.name)}${w.shiny ? " ✦" : ""}${w.cp ? ` <small>${w.cp}</small>` : ""}</span></span>`).join("")}</div>
+      <div class="rrew">${r.rewards.map(w => `<span class="rmon" title="${esc(w.name)}${w.cp ? " · 100% " + w.cp : ""}">${w.icon ? `<img src="${w.icon}" alt="">` : ""}<span>${esc(w.name)}${w.cp ? ` <small>${w.cp}</small>` : ""}${w.shiny ? ` <span class="shiny">✦ shiny</span>` : ""}</span></span>`).join("")}</div>
     </div>`).join("")}</div>` : `<p class="quiet">No event research right now.</p>`;
   document.getElementById("view-research").innerHTML = html;
 }
