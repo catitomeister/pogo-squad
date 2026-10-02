@@ -41,21 +41,52 @@ paintChip();
 function askName(then) {
   pending = then || null;
   dlg.querySelector("#namein").value = me;
+  dlg.querySelector("p").textContent = me
+    ? `Your going marks, meetups and wishlist will move from “${me}” to the new name.`
+    : "Friends will see it when you mark an event or suggest a meetup.";
   dlg.showModal();
 }
 chip.onclick = () => askName();
 dlg.querySelector("#namecancel").onclick = () => { pending = null; dlg.close(); };
-dlg.querySelector("#nameform").addEventListener("submit", ev => {
+dlg.querySelector("#nameform").addEventListener("submit", async ev => {
   ev.preventDefault();
   const v = dlg.querySelector("#namein").value.trim().slice(0, 24);
   if (!v) return;
+  const old = me;
   me = v;
   try { localStorage.setItem(NAME_KEY, me); } catch {}
   paintChip();
   dlg.close();
+  if (old && old !== me) await moveName(old, me).catch(report);
   const p = pending; pending = null;
   if (p) p(); else fill();
 });
+
+// Move everything recorded under one name to another (merging, never duplicating)
+async function moveName(from, to) {
+  const jobs = [];
+  const moveRsvp = (eventId, names) => {
+    if (!names.includes(from)) return;
+    if (!names.includes(to)) jobs.push(setDoc(doc(db, "rsvps", rsvpId(eventId, to)), { eventId, name: to, ts: serverTimestamp() }));
+    jobs.push(deleteDoc(doc(db, "rsvps", rsvpId(eventId, from))));
+  };
+  for (const [ev, ns] of going) moveRsvp(ev, ns);
+  for (const [mon, ns] of wishes) moveRsvp(WISH + mon, ns);
+  for (const m of meetups) {
+    const plus = m.plus || [];
+    if (m.by === from) {
+      // the author can't be edited under the rules, so re-post it under the new name with the same people
+      const others = plus.filter(n => n !== from && n !== to);
+      jobs.push(addDoc(collection(db, "meetups"), { eventId: m.eventId, when: m.when, place: m.place || "", by: to, plus: [], ts: serverTimestamp() })
+        .then(ref => others.length ? updateDoc(ref, { plus: others }) : null)
+        .then(() => deleteDoc(doc(db, "meetups", m.id))));
+    } else if (plus.includes(from)) {
+      const next = [...new Set(plus.map(n => (n === from ? to : n)))].filter(n => n !== m.by);
+      jobs.push(updateDoc(doc(db, "meetups", m.id), { plus: next }));
+    }
+  }
+  await Promise.all(jobs);
+}
 const needName = fn => (me ? fn() : askName(fn));
 
 // ---------- shiny wishlist (stored as rsvps with eventId "wish__<Pokémon>", so the existing rules cover it)
