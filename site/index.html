@@ -1,0 +1,471 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#d93a1e"><link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon-180.png"><style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style><link rel="stylesheet" href="social.css"></head><body><title>POGO Squad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: phone-first. Compact week strip, then Today first. Each event is a self-contained card:
+   time, featured Pokémon with hundo CP / weather / weaknesses, evolve move, new shinies, bonuses. Raid bosses and all-week events below. */
+:root {
+  --bg: #eef2ef;
+  --surface: #ffffff;
+  --ink: #15201c;
+  --muted: #5a6963;
+  --line: #d5ddd8;
+  --accent: #d93a1e;
+  --accent-soft: #fbe3dc;
+  --live: #0f8a5f;
+  --chip: #e9eeeb;
+  --gold: #a87400;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-data: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101614; --surface: #19211e; --ink: #e7eeea; --muted: #94a39c; --line: #2b3632;
+    --accent: #ff6b4a; --accent-soft: #3d1f17; --live: #2fbf86; --chip: #232d29; --gold: #f2c14e;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101614; --surface: #19211e; --ink: #e7eeea; --muted: #94a39c; --line: #2b3632;
+  --accent: #ff6b4a; --accent-soft: #3d1f17; --live: #2fbf86; --chip: #232d29; --gold: #f2c14e;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.45 var(--f-body); }
+.wrap { max-width: 860px; margin: 0 auto; padding-inline: 16px; padding-block: 0 48px; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+a { color: inherit; }
+
+/* Header */
+header.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.top-inner { max-width: 860px; margin: 0 auto; padding-inline: 16px; padding-block: 8px 0; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.brand { white-space: nowrap; font: 800 1.3rem/1 var(--f-display); letter-spacing: -0.02em; padding-bottom: 9px; }
+.brand span { color: var(--accent); }
+.tabs { display: flex; gap: 2px; }
+.tab { white-space: nowrap; appearance: none; border: 0; background: none; color: var(--muted); cursor: pointer; font-weight: 700; font-size: 0.98rem; padding: 4px 8px 8px; border-bottom: 3px solid transparent; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+
+/* Week bar (compact) */
+.range { text-align: center; font: 500 0.82rem var(--f-data); color: var(--muted); margin-top: 8px; }
+.range button { appearance: none; border: 0; background: none; color: var(--accent); font: 700 0.74rem var(--f-body); cursor: pointer; padding: 0 0 0 8px; }
+.weekbar { margin-top: 4px; display: grid; grid-template-columns: 28px minmax(0, 1fr) 28px; gap: 6px; align-items: center; }
+.navbtn { appearance: none; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-size: 1rem; line-height: 1; padding: 0; }
+.navbtn:disabled { opacity: 0.35; cursor: default; }
+.strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+.dayhead { appearance: none; border: 0; background: var(--surface); cursor: pointer; text-align: center; padding: 3px 0 2px; border-radius: 8px; position: relative; }
+.dayhead .dow { display: block; font: 700 0.62rem var(--f-body); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.dayhead .num { display: block; font: 800 1.08rem/1.2 var(--f-display); }
+.dayhead.today { background: var(--accent); }
+.dayhead.today .dow, .dayhead.today .num { color: var(--surface); }
+.dayhead.past { opacity: 0.45; }
+.dayhead.has::after { content: ""; position: absolute; right: 4px; top: 4px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.dayhead.today.has::after { background: var(--surface); }
+.linkbtn { display: block; margin: 14px auto 0; appearance: none; border: 0; background: none; color: var(--accent); font-weight: 700; font-size: 0.82rem; cursor: pointer; }
+
+/* Day sections */
+.day { margin-top: 16px; scroll-margin-top: 64px; }
+.dayh { font: 800 1.35rem var(--f-display); margin: 0 0 8px; display: flex; align-items: baseline; gap: 8px; }
+.dayh .date { font: 500 0.88rem var(--f-data); color: var(--muted); }
+.day.past { opacity: 0.55; }
+.quiet { color: var(--muted); font-size: 0.95rem; }
+
+/* Event card: thumbnail left, everything you need on the right */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 8px; align-items: start; }
+.ev { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+.ev.live { border-color: var(--live); box-shadow: 0 0 0 1.5px var(--live); }
+.thumb { position: relative; background: var(--chip); aspect-ratio: 3 / 1; display: block; }
+.thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.evbody { padding: 10px 14px 14px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.evtop { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.when { font: 700 1rem var(--f-data); font-variant-numeric: tabular-nums; }
+.state { font: 700 0.8rem var(--f-data); padding: 2px 9px; border-radius: 999px; }
+.state.live { background: var(--live); color: var(--surface); }
+.state.soon { background: var(--accent); color: var(--surface); }
+.kind { font: 700 0.72rem var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.kind.k-cd { color: var(--accent); }
+.name { font-weight: 700; font-size: 1.15rem; line-height: 1.25; text-wrap: balance; }
+.name a { text-decoration: none; }
+.name a:hover { text-decoration: underline; }
+.name a::after { content: " ↗"; color: var(--muted); font-weight: 400; font-size: 0.8em; }
+
+.mons { display: grid; gap: 4px; }
+.mon { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 8px; align-items: center; background: var(--chip); border-radius: 12px; padding: 6px 10px 6px 6px; }
+.mon img { width: 52px; height: 52px; object-fit: contain; }
+.mn { font-weight: 700; font-size: 1.05rem; line-height: 1.25; }
+.stats { display: flex; flex-wrap: wrap; gap: 0 12px; font-size: 0.85rem; color: var(--muted); align-items: baseline; }
+.stats b { font: 700 1.02rem var(--f-data); color: var(--ink); font-variant-numeric: tabular-nums; }
+.wx { font-size: 1rem; letter-spacing: 2px; }
+.weakline { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 4px; font-size: 0.8rem; color: var(--muted); }
+.shiny { color: var(--gold); font-weight: 700; font-size: 0.9rem; }
+.ev.compact { opacity: 0.8; display: grid; grid-template-columns: 72px minmax(0, 1fr); }
+.ev.compact .thumb { aspect-ratio: auto; height: 100%; min-height: 72px; }
+.ev.compact .evbody { padding: 8px 12px; gap: 2px; }
+.ev.compact .name { font-size: 1rem; }
+.region { font-size: 0.95rem; font-weight: 700; color: var(--muted); }
+
+.facts { display: grid; gap: 4px; margin: 2px 0 0; padding: 0; list-style: none; font-size: 0.95rem; line-height: 1.35; }
+.facts li { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 4px; }
+.facts li::before { content: "•"; color: var(--accent); font-weight: 700; }
+.facts li.evo::before { content: "↑"; }
+.facts li.sh::before { content: "✦"; color: var(--gold); }
+.facts li.rr { font-weight: 700; color: var(--accent); }
+.facts li.rr::before { content: "⇄"; }
+.facts strong { font-weight: 700; }
+
+/* Raids */
+.sec { font: 800 1.35rem var(--f-display); margin: 30px 0 4px; }
+.sec-sub { color: var(--muted); font-size: 0.92rem; margin: 0 0 10px; }
+.bosses { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 8px; }
+.boss { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; }
+.bosses.leaving .boss { opacity: 0.6; }
+.boss .pic { width: 64px; height: 64px; object-fit: contain; }
+.bbody { display: grid; gap: 3px; min-width: 0; }
+.types { display: flex; gap: 4px; flex-wrap: wrap; }
+.type { font: 700 0.72rem var(--f-body); text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 7px; border-radius: 6px; color: #fff; background: var(--t, #777); }
+.weak { margin-top: 4px; display: grid; gap: 3px; }
+.weak-row { display: flex; gap: 3px; align-items: center; flex-wrap: wrap; }
+.weak-row b { font: 700 0.78rem var(--f-data); width: 58px; color: var(--muted); }
+.weak-row.dbl b { color: var(--accent); }
+.window { font-size: 0.88rem; color: var(--muted); }
+.tierlabel { font: 700 0.7rem var(--f-body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 16px 0 8px; }
+
+.social:empty { display: none; }
+.also { margin-top: 26px; font-size: 0.82rem; color: var(--muted); display: grid; gap: 4px; }
+.also a { color: var(--ink); font-weight: 700; text-decoration: none; }
+footer { margin-top: 32px; font-size: 0.76rem; color: var(--muted); }
+footer a { color: var(--muted); }
+</style>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">POGO <span>Squad</span></div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-week" aria-selected="true" aria-controls="view-week">Week</button>
+      <button class="tab" role="tab" id="tab-raids" aria-selected="false" aria-controls="view-raids">Raids</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="view-week" role="tabpanel" aria-labelledby="tab-week"></section>
+  <section id="view-raids" role="tabpanel" aria-labelledby="tab-raids" hidden></section>
+  <footer id="foot"></footer>
+</main>
+
+<script>
+const DATA = {"built":"2026-10-02T21:01+00:00","events":[{"id":"pokemonspotlighthour2026-10-01","name":"Seedot Spotlight Hour","type":"pokemon-spotlight-hour","heading":"Pokémon Spotlight Hour","link":"https://leekduck.com/events/pokemonspotlighthour2026-10-01/","start":null,"end":null,"image":"img/c9a51a9d63d8f3c5.webp","mons":[{"name":"Seedot","shiny":true,"icon":"img/9bb8f4184b82f552.webp","types":["grass"],"cp20":342,"cp25":427}],"bonuses":["2× Catch XP"],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"patterns-of-the-wild-2026","name":"Patterns of the Wild","type":"event","heading":"Event","link":"https://leekduck.com/events/patterns-of-the-wild-2026/","start":"2026-10-02T10:00:00.000","end":"2026-10-02T20:00:00.000","image":"img/2294bce714249e2c.webp","mons":[],"bonuses":["Incense will last for two hours","Increased chance to encounter Pikachu wearing a batik shirt and other event-themed Pokémon while using Incense","Increased chance to encounter Shiny featured wild Pokémon"],"newShiny":[],"evolve":null,"region":"Indonesia","remote":[]},{"id":"gigantamax-cinderace-max-battle-day-2026","name":"Gigantamax Cinderace Max Battle Day","type":"max-battles","heading":"Max Battles","link":"https://leekduck.com/events/gigantamax-cinderace-max-battle-day-2026/","start":"2026-10-03T14:00:00.000","end":"2026-10-03T17:00:00.000","image":"img/0ad251753a654001.webp","mons":[{"name":"Cinderace","shiny":false,"icon":"img/6dcecded1fe975f7.webp","types":["fire"],"cp20":1724,"cp25":2156}],"bonuses":["Max Particle collection limit increased to 1,600","All Power Spots will host Gigantamax Battles","Power Spots will refresh more frequently","Additional Power Spots will be active","8× Max Particles from Power Spots","Up to three Special Trades for the day","From October 2 at 5:00 p.m. to October 3 at 8:00 p.m. PDT (GMT −7), the daily Remote Raid limit will increase from 10 to 20","2× Max Particles from exploring*","1/4 Adventuring distance to receive Max Particles**","2× XP from Max Battles"],"newShiny":[],"evolve":null,"region":null,"remote":["Remote raid limit 20/day (normally 10)"]},{"id":"harvest-festival-2026","name":"Harvest Festival 2026: Applin Picking","type":"event","heading":"Event","link":"https://leekduck.com/events/harvest-festival-2026/","start":"2026-09-29T10:00:00.000","end":"2026-10-05T20:00:00.000","image":"img/f8e6783dee48a7df.webp","mons":[{"name":"Applin","shiny":false,"icon":"img/e500fdb38347d8f8.webp","types":["grass","dragon"],"cp20":408,"cp25":510}],"bonuses":["Increased chance to encounter Shiny Smoliv","Applin will have an increased chance of holding Tart Apples, Sweet Apples, or Syrupy Apples when caught","Mossy Lure Modules activated during the event will last for one hour","More Stardust from defeating Team GO Rocket Grunts and Leaders"],"newShiny":["Applin","Flapple","Appletun","Dipplin","Hydrapple"],"evolve":null,"region":null,"remote":[]},{"id":"harvest-festival-taken-over-2026","name":"Harvest Festival: Taken Over","type":"event","heading":"Event","link":"https://leekduck.com/events/harvest-festival-taken-over-2026/","start":"2026-10-02T00:00:00.000","end":"2026-10-05T20:00:00.000","image":"img/de275db0e6b09379.webp","mons":[],"bonuses":["Increased chance to encounter Shiny Slugma","More Team GO Rocket appearances at PokéStops and balloons appearing every 2 hours","Use a Charged TM to remove Frustration from Shadow Pokémon","Wider Attack, Defense, and HP variance for Pokémon caught in one-star and three-star Shadow Raids during the event"],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"max-mondays-2026-10-05","name":"Dynamax Sizzlipede during Max Monday","type":"max-mondays","heading":"Max Mondays","link":"https://leekduck.com/events/max-mondays-2026-10-05/","start":"2026-10-05T06:00:00.000","end":"2026-10-05T21:00:00.000","image":"img/2cb3df14f630f165.webp","mons":[{"name":"Sizzlipede","shiny":false,"icon":"img/7402317bd58febdf.webp","types":["fire","bug"],"cp20":599,"cp25":749}],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"go-pass-september-2026","name":"GO Pass: September","type":"go-pass","heading":"GO Pass","link":"https://leekduck.com/events/go-pass-september-2026/","start":"2026-09-08T10:00:00.000","end":"2026-10-06T10:00:00.000","image":"img/53f48e9b38a06edf.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"gbl-twilight-trails_master-league_mega-color-cup-great-league-edition","name":"Master League and Mega Color Cup: Great League Edition | Twilight Trails","type":"go-battle-league","heading":"GO Battle League","link":"https://leekduck.com/events/gbl-twilight-trails_master-league_mega-color-cup-great-league-edition/","start":"2026-09-29T20:00:00.000Z","end":"2026-10-06T20:00:00.000Z","image":"img/bf77f9d5883bb497.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"shadow-thundurus-incarnate-forme-in-shadow-raids-september-2026","name":"Shadow Thundurus (Incarnate Forme) in Shadow Raids","type":"raid-battles","heading":"Raid Battles","link":"https://leekduck.com/events/shadow-thundurus-incarnate-forme-in-shadow-raids-september-2026/","start":"2026-09-09T06:00:00.000","end":"2026-10-06T22:00:00.000","image":"img/615c3a3590590f94.webp","mons":[{"name":"Thundurus (Incarnate)","shiny":true,"icon":"img/2ed19027732e72cf.webp","types":["electric","flying"],"cp20":1911,"cp25":2389}],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"mega-victreebel-in-mega-raids-september-2026","name":"Mega Victreebel in Mega Raids","type":"raid-battles","heading":"Raid Battles","link":"https://leekduck.com/events/mega-victreebel-in-mega-raids-september-2026/","start":"2026-09-30T06:00:00.000","end":"2026-10-06T22:00:00.000","image":"img/d8efd3c3a40d4461.webp","mons":[{"name":"Mega Victreebel","shiny":true,"icon":"img/e1795cabcc981950.webp","types":["grass","poison"],"cp20":1389,"cp25":1736}],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"xerneas-in-5-star-raid-battles-september-2026","name":"Xerneas in 5-star Raid Battles","type":"raid-battles","heading":"Raid Battles","link":"https://leekduck.com/events/xerneas-in-5-star-raid-battles-september-2026/","start":"2026-09-30T06:00:00.000","end":"2026-10-06T22:00:00.000","image":"img/ad4396fbc418d2b3.webp","mons":[{"name":"Xerneas","shiny":true,"icon":"img/444af3d35567814e.webp","types":["fairy"],"cp20":2160,"cp25":2701}],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"raidhour20261007","name":"Yveltal Raid Hour","type":"raid-hour","heading":"Raid Hour","link":"https://leekduck.com/events/raidhour20261007/","start":"2026-10-07T18:00:00.000","end":"2026-10-07T19:00:00.000","image":"img/b419735556b5b8cb.webp","mons":[{"name":"Yveltal","shiny":false,"icon":"img/2c1bb584aac778cb.webp","types":["dark","flying"],"cp20":2160,"cp25":2701}],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"pokemonspotlighthour2026-10-08","name":"Elgyem Spotlight Hour","type":"pokemon-spotlight-hour","heading":"Pokémon Spotlight Hour","link":"https://leekduck.com/events/pokemonspotlighthour2026-10-08/","start":"2026-10-08T18:00:00.000","end":"2026-10-08T19:00:00.000","image":"img/c9a51a9d63d8f3c5.webp","mons":[{"name":"Elgyem","shiny":true,"icon":"img/a14ea134749de486.webp","types":["psychic"],"cp20":791,"cp25":989}],"bonuses":["2× Catch Candy"],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"october-communityday2026","name":"Zorua Community Day","type":"community-day","heading":"Community Day","link":"https://leekduck.com/events/october-communityday2026/","start":"2026-10-10T14:00:00.000","end":"2026-10-10T17:00:00.000","image":"img/75b016b9507624c1.webp","mons":[{"name":"Zorua","shiny":true,"icon":"img/f8dad852affdfa79.webp","types":["dark"],"cp20":671,"cp25":839}],"bonuses":["Increased Spawns","3x Catch XP","3-hour Incense","1-hour Lures*","2x Catch Candy","2x Chance for Trainers level 31 and up to receive Candy XL from catching Pokémon","One additional Special Trade can be made for a maximum of two for the day*","Trades made will require 50% less Stardust*"],"newShiny":[],"evolve":"Evolve Zorua during the event or up to four hours afterwards to get a Zoroark that knows the Fast Attack Sucker Punch","region":null,"remote":[]},{"id":"world-space-week-2026","name":"World Space Week 2026","type":"event","heading":"Event","link":"https://leekduck.com/events/world-space-week-2026/","start":"2026-10-04T00:00:00.000","end":"2026-10-10T23:59:00.000","image":"img/41ffe17701495ba1.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"max-mondays-2026-10-12","name":"Dynamax Rookidee during Max Monday","type":"max-mondays","heading":"Max Mondays","link":"https://leekduck.com/events/max-mondays-2026-10-12/","start":"2026-10-12T06:00:00.000","end":"2026-10-12T21:00:00.000","image":"img/2cb3df14f630f165.webp","mons":[{"name":"Rookidee","shiny":false,"icon":"img/6f47ecae955deb42.webp","types":["flying"],"cp20":380,"cp25":476}],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"gbl-twilight-trails_great-league-mega-edition_ultra-league-mega-edition_master-league-mega-edition-split-2","name":"Great League: Mega Edition, Ultra League: Mega Edition, and Master League: Mega Edition | Twilight Trails","type":"go-battle-league","heading":"GO Battle League","link":"https://leekduck.com/events/gbl-twilight-trails_great-league-mega-edition_ultra-league-mega-edition_master-league-mega-edition-split-2/","start":"2026-10-06T20:00:00.000Z","end":"2026-10-13T20:00:00.000Z","image":"img/c09710d2d89c81b9.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"mega-blastoise-in-mega-raids-october-2026","name":"Mega Blastoise in Mega Raids","type":"raid-battles","heading":"Raid Battles","link":"https://leekduck.com/events/mega-blastoise-in-mega-raids-october-2026/","start":"2026-10-07T06:00:00.000","end":"2026-10-13T22:00:00.000","image":"img/d8efd3c3a40d4461.webp","mons":[{"name":"Mega Blastoise","shiny":true,"icon":"img/af690a6532ae824f.webp","types":["water"],"cp20":1409,"cp25":1761}],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"yveltal-in-5-star-raid-battles-october-2026","name":"Yveltal in 5-star Raid Battles","type":"raid-battles","heading":"Raid Battles","link":"https://leekduck.com/events/yveltal-in-5-star-raid-battles-october-2026/","start":"2026-10-07T06:00:00.000","end":"2026-10-13T22:00:00.000","image":"img/89d1ce90043e4d64.webp","mons":[{"name":"Yveltal","shiny":true,"icon":"img/2c1bb584aac778cb.webp","types":["dark","flying"],"cp20":2160,"cp25":2701}],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"raidhour20261014","name":"Dialga Raid Hour","type":"raid-hour","heading":"Raid Hour","link":"https://leekduck.com/events/raidhour20261014/","start":"2026-10-14T18:00:00.000","end":"2026-10-14T19:00:00.000","image":"img/b419735556b5b8cb.webp","mons":[{"name":"Dialga","shiny":false,"icon":"img/e72397bede0e159b.webp","types":["steel","dragon"],"cp20":2307,"cp25":2884}],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"pokemonspotlighthour2026-10-15","name":"Stufful Spotlight Hour","type":"pokemon-spotlight-hour","heading":"Pokémon Spotlight Hour","link":"https://leekduck.com/events/pokemonspotlighthour2026-10-15/","start":"2026-10-15T18:00:00.000","end":"2026-10-15T19:00:00.000","image":"img/c9a51a9d63d8f3c5.webp","mons":[{"name":"Stufful","shiny":true,"icon":"img/ce7bba85c91d521a.webp","types":["normal","fighting"],"cp20":772,"cp25":966}],"bonuses":["2× Transfer Candy"],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"sandile-hatch-day-2026","name":"Sandile Hatch Day","type":"event","heading":"Event","link":"https://leekduck.com/events/sandile-hatch-day-2026/","start":"2026-10-17T11:00:00.000","end":"2026-10-17T17:00:00.000","image":"img/c351b53325ec0885.webp","mons":[{"name":"Sandile","shiny":false,"icon":"img/fac6acabef493a70.webp","types":["ground","dark"],"cp20":592,"cp25":741}],"bonuses":["2× Candy from hatching Eggs*","1/2 Egg Hatch Distance*","Increased chance of hatching Shiny Sandile","Increased chance of receiving 2 km Eggs from spinning PokéStops","1/4 Egg Hatch Distance*"],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"fall-marathon-buddy-trek-2026","name":"Fall Marathon: Buddy Trek","type":"event","heading":"Event","link":"https://leekduck.com/events/fall-marathon-buddy-trek-2026/","start":"2026-10-13T10:00:00.000","end":"2026-10-19T20:00:00.000","image":"img/3c1cc701e9eca322.webp","mons":[],"bonuses":["Incense (excluding Daily Adventure Incense) activated during the event lasts for two hours","5× Mega Energy from exploring with Electrike or Manectric as your buddy after Mega Evolving Manectric at least once"],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"max-mondays-2026-10-19","name":"Dynamax Sneasel during Max Monday","type":"max-mondays","heading":"Max Mondays","link":"https://leekduck.com/events/max-mondays-2026-10-19/","start":"2026-10-19T06:00:00.000","end":"2026-10-19T21:00:00.000","image":"img/2cb3df14f630f165.webp","mons":[{"name":"Sneasel","shiny":false,"icon":"img/bf0aefdbfb10cee0.webp","types":["dark","ice"],"cp20":1172,"cp25":1465}],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"gbl-twilight-trails_great-league_ultra-league-mega-edition_little-cup","name":"Great League, Ultra League: Mega Edition, and Little Cup | Twilight Trails","type":"go-battle-league","heading":"GO Battle League","link":"https://leekduck.com/events/gbl-twilight-trails_great-league_ultra-league-mega-edition_little-cup/","start":"2026-10-13T20:00:00.000Z","end":"2026-10-20T20:00:00.000Z","image":"img/410cefdeab8e3353.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"pokemon-tcg-30th-celebration","name":"Pokémon TCG: 30th Celebration","type":"event","heading":"Event","link":"https://leekduck.com/events/pokemon-tcg-30th-celebration/","start":"2026-09-27T10:00:00.000","end":"2026-10-20T22:00:00.000","image":"img/d334dd30cd5d450f.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"dialga-in-5-star-raid-battles-october-2026","name":"Dialga in 5-star Raid Battles","type":"raid-battles","heading":"Raid Battles","link":"https://leekduck.com/events/dialga-in-5-star-raid-battles-october-2026/","start":"2026-10-14T06:00:00.000","end":"2026-10-20T22:00:00.000","image":"img/9f15a42608181302.webp","mons":[{"name":"Dialga","shiny":true,"icon":"img/e72397bede0e159b.webp","types":["steel","dragon"],"cp20":2307,"cp25":2884}],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"mega-dragonite-in-mega-raids-october-2026","name":"Mega Dragonite in Mega Raids","type":"raid-battles","heading":"Raid Battles","link":"https://leekduck.com/events/mega-dragonite-in-mega-raids-october-2026/","start":"2026-10-14T06:00:00.000","end":"2026-10-20T22:00:00.000","image":"img/d8efd3c3a40d4461.webp","mons":[{"name":"Mega Dragonite","shiny":true,"icon":"img/777141181a4da109.webp","types":["dragon","flying"],"cp20":2167,"cp25":2709}],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"raidhour20261021","name":"Palkia Raid Hour","type":"raid-hour","heading":"Raid Hour","link":"https://leekduck.com/events/raidhour20261021/","start":"2026-10-21T18:00:00.000","end":"2026-10-21T19:00:00.000","image":"img/b419735556b5b8cb.webp","mons":[{"name":"Palkia","shiny":false,"icon":"img/a459e0414ace7bd9.webp","types":["water","dragon"],"cp20":2280,"cp25":2850}],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"pokemonspotlighthour2026-10-22","name":"Morelull Spotlight Hour","type":"pokemon-spotlight-hour","heading":"Pokémon Spotlight Hour","link":"https://leekduck.com/events/pokemonspotlighthour2026-10-22/","start":"2026-10-22T18:00:00.000","end":"2026-10-22T19:00:00.000","image":"img/c9a51a9d63d8f3c5.webp","mons":[{"name":"Morelull","shiny":true,"icon":"img/218ba514fadf3ed4.webp","types":["grass","fairy"],"cp20":590,"cp25":738}],"bonuses":["2× Catch Stardust"],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"dynamax-uxie-mesprit-azelf-max-battle-day-2026","name":"Dynamax Uxie, Mesprit, and Azelf Max Battle Day","type":"max-battles","heading":"Max Battles","link":"https://leekduck.com/events/dynamax-uxie-mesprit-azelf-max-battle-day-2026/","start":"2026-10-24T14:00:00.000","end":"2026-10-24T17:00:00.000","image":"img/c5ea96fd43cd8b5e.webp","mons":[{"name":"Uxie","shiny":false,"icon":"img/808617e4ba326922.webp","types":["psychic"],"cp20":1442,"cp25":1803},{"name":"Mesprit","shiny":false,"icon":"img/ccf2de47f0d218f8.webp","types":["psychic"],"cp20":1747,"cp25":2184},{"name":"Azelf","shiny":false,"icon":"img/78f61f40d48950b5.webp","types":["psychic"],"cp20":1834,"cp25":2293}],"bonuses":["Max Particle collection limit increased to 1,600","All Power Spots will host Dynamax Battles","Power Spots will refresh more frequently","Additional Power Spots will be active","8× Max Particles from Power Spots","Up to three Special Trades for the day","From October 23 at 5:00 p.m. to October 24 at 8:00 p.m. PDT (GMT −7), the daily Remote Raid limit will increase from 10 to 20","2× Max Particles from exploring*","1/4 Adventuring distance to receive Max Particles**","2× XP from Max Battles"],"newShiny":[],"evolve":null,"region":null,"remote":["Remote raid limit 20/day (normally 10)"]},{"id":"pokemon-night-out-2026-twitch-drops","name":"Twitch Drops for Pokémon Night Out 2026","type":"twitch-drops","heading":"Twitch Drops","link":"https://leekduck.com/events/pokemon-night-out-2026-twitch-drops/","start":"2026-10-25T02:30:00.000Z","end":"2026-10-25T06:59:00.000Z","image":"img/282d236be28bd0be.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"minior-showers-orionids-2026","name":"Minior Showers: Orionids 2026","type":"event","heading":"Event","link":"https://leekduck.com/events/minior-showers-orionids-2026/","start":"2026-10-19T17:00:00.000","end":"2026-10-24T23:59:00.000","image":"img/0a8eefe87cdd3d84.webp","mons":[{"name":"Minior","shiny":false,"icon":null,"types":[],"cp20":null,"cp25":null}],"bonuses":["Increased Stardust for catching Minior","Increased chance to encounter Minior from 5:00 p.m. to 9:00 p.m. local time each day"],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"max-mondays-2026-10-26","name":"Dynamax Sableye during Max Monday","type":"max-mondays","heading":"Max Mondays","link":"https://leekduck.com/events/max-mondays-2026-10-26/","start":"2026-10-26T06:00:00.000","end":"2026-10-26T21:00:00.000","image":"img/2cb3df14f630f165.webp","mons":[{"name":"Sableye","shiny":false,"icon":"img/628fec7eb52206ff.webp","types":["dark","ghost"],"cp20":843,"cp25":1054}],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"gbl-twilight-trails_ultra-league_master-league-mega-edition_fantasy-cup-great-league-edition","name":"Ultra League, Master League: Mega Edition, and Fantasy Cup: Great League Edition | Twilight Trails","type":"go-battle-league","heading":"GO Battle League","link":"https://leekduck.com/events/gbl-twilight-trails_ultra-league_master-league-mega-edition_fantasy-cup-great-league-edition/","start":"2026-10-20T20:00:00.000Z","end":"2026-10-27T20:00:00.000Z","image":"img/2b228e0d82d4b14a.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"mega-charizard-x-mega-charizard-y-in-mega-raids-october-2026","name":"Mega Charizard X and Mega Charizard Y in Mega Raids","type":"raid-battles","heading":"Raid Battles","link":"https://leekduck.com/events/mega-charizard-x-mega-charizard-y-in-mega-raids-october-2026/","start":"2026-10-21T06:00:00.000","end":"2026-10-27T22:00:00.000","image":"img/d8efd3c3a40d4461.webp","mons":[{"name":"Mega Charizard X","shiny":true,"icon":"img/d83ac16ef5e56f0a.webp","types":["fire","dragon"],"cp20":1651,"cp25":2064},{"name":"Mega Charizard Y","shiny":true,"icon":"img/6bcb078942cd32c1.webp","types":["fire","flying"],"cp20":1651,"cp25":2064}],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"palkia-in-5-star-raid-battles-october-2026","name":"Palkia in 5-star Raid Battles","type":"raid-battles","heading":"Raid Battles","link":"https://leekduck.com/events/palkia-in-5-star-raid-battles-october-2026/","start":"2026-10-21T06:00:00.000","end":"2026-10-27T22:00:00.000","image":"img/f795d1161ea0a989.webp","mons":[{"name":"Palkia","shiny":true,"icon":"img/a459e0414ace7bd9.webp","types":["water","dragon"],"cp20":2280,"cp25":2850}],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"raidhour20261028","name":"Giratina (Origin Forme) Raid Hour","type":"raid-hour","heading":"Raid Hour","link":"https://leekduck.com/events/raidhour20261028/","start":"2026-10-28T18:00:00.000","end":"2026-10-28T19:00:00.000","image":"img/b419735556b5b8cb.webp","mons":[{"name":"Giratina (Origin)","shiny":false,"icon":"img/3e0d9c378bd4c9bb.webp","types":["ghost","dragon"],"cp20":2105,"cp25":2631}],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"pokemonspotlighthour2026-10-29","name":"Gastly Spotlight Hour","type":"pokemon-spotlight-hour","heading":"Pokémon Spotlight Hour","link":"https://leekduck.com/events/pokemonspotlighthour2026-10-29/","start":"2026-10-29T18:00:00.000","end":"2026-10-29T19:00:00.000","image":"img/c9a51a9d63d8f3c5.webp","mons":[{"name":"Gastly","shiny":true,"icon":"img/a850041def85f64e.webp","types":["ghost","poison"],"cp20":702,"cp25":878}],"bonuses":["2× Evolution XP"],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"super-mega-raid-day-october-2026","name":"Super Mega Raid Day","type":"raid-day","heading":"Raid Day","link":"https://leekduck.com/events/super-mega-raid-day-october-2026/","start":"2026-10-31T14:00:00.000","end":"2026-10-31T17:00:00.000","image":"img/615c3a3590590f94.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"halloween-2026-part-1","name":"Halloween 2026 Part I","type":"event","heading":"Event","link":"https://leekduck.com/events/halloween-2026-part-1/","start":"2026-10-27T10:00:00.000","end":"2026-10-31T20:00:00.000","image":"img/615c3a3590590f94.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"go-pass-october-2026","name":"GO Pass: October","type":"go-pass","heading":"GO Pass","link":"https://leekduck.com/events/go-pass-october-2026/","start":"2026-10-06T10:00:00.000","end":"2026-11-03T10:00:00.000","image":"img/d335dd1bfb453638.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"gbl-twilight-trails_master-league_mega-halloween-cup-great-league-edition","name":"Master League and Mega Halloween Cup: Great League Edition | Twilight Trails","type":"go-battle-league","heading":"GO Battle League","link":"https://leekduck.com/events/gbl-twilight-trails_master-league_mega-halloween-cup-great-league-edition/","start":"2026-10-27T21:00:00.000Z","end":"2026-11-03T21:00:00.000Z","image":"img/bf77f9d5883bb497.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"shadow-landorus-incarnate-forme-in-shadow-raids-october-2026","name":"Shadow Landorus (Incarnate Forme) in Shadow Raids","type":"raid-battles","heading":"Raid Battles","link":"https://leekduck.com/events/shadow-landorus-incarnate-forme-in-shadow-raids-october-2026/","start":"2026-10-07T06:00:00.000","end":"2026-11-03T22:00:00.000","image":"img/615c3a3590590f94.webp","mons":[{"name":"Landorus (Incarnate)","shiny":true,"icon":"img/3623f0209d997f68.webp","types":["ground","flying"],"cp20":2050,"cp25":2563}],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"giratina-origin-forme-in-5-star-raid-battles-october-2026","name":"Giratina (Origin Forme) in 5-star Raid Battles","type":"raid-battles","heading":"Raid Battles","link":"https://leekduck.com/events/giratina-origin-forme-in-5-star-raid-battles-october-2026/","start":"2026-10-28T06:00:00.000","end":"2026-11-03T22:00:00.000","image":"img/0220622401cd7795.webp","mons":[{"name":"Giratina (Origin)","shiny":true,"icon":"img/942b811e1c75aaf4.webp","types":["ghost","dragon"],"cp20":2105,"cp25":2631}],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"mega-sableye-in-mega-raids-october-2026","name":"Mega Sableye in Mega Raids","type":"raid-battles","heading":"Raid Battles","link":"https://leekduck.com/events/mega-sableye-in-mega-raids-october-2026/","start":"2026-10-28T06:00:00.000","end":"2026-11-03T22:00:00.000","image":"img/d8efd3c3a40d4461.webp","mons":[{"name":"Mega Sableye","shiny":true,"icon":"img/2fe58874bb7310bc.webp","types":["dark","ghost"],"cp20":843,"cp25":1054}],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"halloween-2026-part-2","name":"Halloween 2026 Part II","type":"event","heading":"Event","link":"https://leekduck.com/events/halloween-2026-part-2/","start":"2026-11-01T10:00:00.000","end":"2026-11-05T20:00:00.000","image":"img/615c3a3590590f94.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"pokemon-go-wild-area-2026-sendai-japan","name":"Pokémon GO Wild Area 2026: Sendai • Tohoku","type":"wild-area","heading":"Wild Area","link":"https://leekduck.com/events/pokemon-go-wild-area-2026-sendai-japan/","start":"2026-11-06T01:00:00.000Z","end":"2026-11-08T09:00:00.000Z","image":"img/22c7b938686c79d6.webp","mons":[],"bonuses":["Increased chance to encounter Shiny Pokémon","1/2 Hatch Distance for Eggs placed in Incubators during the event","Up to 10 free Raid Passes per day from Gyms","3/4 Max Particle cost for unlocking and powering up Max Moves","Daily Max Particle collection limit increased to 8,000","Increased Max Particles from Power Spots and exploration","Increased chance of 10 km Eggs from PokéStops and Gyms","Lure Modules last for 2 hours","Incense, excluding Daily Adventure Incense, lasts for 2 hours","2× Candy for catching Pokémon","Party Play lasts for 8 hours","Chance to encounter mighty Pokémon on Routes","3 GO Snapshot surprise encounters per day","Chance to get GO Safari Balls from PokéStops and Gyms","Up to 6 Special Trades per day","1/2 Stardust cost for trades","Up to 18 free Raid Passes per day from Gyms","5,000 additional XP from completed raids","2× XP from completed Max Battles","6 additional Candy for catching Pokémon in raids","3 additional Candy XL for catching Pokémon in raids (level 31+)","1 additional Candy for catching Pokémon in Max Battles","1 additional Candy XL for catching Pokémon in Max Battles (level 31+)","1/4 Egg Hatch Distance","3× Hatch XP","3× Hatch Candy","3× Hatch Stardust"],"newShiny":[],"evolve":null,"region":"Sendai • Tohoku","remote":[]},{"id":"pokemon-go-wild-area-2026-mexico-city","name":"Pokémon GO Wild Area 2026: Mexico City","type":"wild-area","heading":"Wild Area","link":"https://leekduck.com/events/pokemon-go-wild-area-2026-mexico-city/","start":"2026-11-06T16:00:00.000Z","end":"2026-11-09T00:00:00.000Z","image":"img/3e7789df49488555.webp","mons":[],"bonuses":["Increased chance to encounter Shiny Pokémon","1/2 Hatch Distance for Eggs placed in Incubators during the event","Up to 10 free Raid Passes per day from Gyms","3/4 Max Particle cost for unlocking and powering up Max Moves","Daily Max Particle collection limit increased to 8,000","Increased Max Particles from Power Spots and exploration","Increased chance of 10 km Eggs from PokéStops and Gyms","Lure Modules last for 2 hours","Incense, excluding Daily Adventure Incense, lasts for 2 hours","2× Candy for catching Pokémon","Party Play lasts for 8 hours","Chance to encounter mighty Pokémon on Routes","3 GO Snapshot surprise encounters per day","Chance to get GO Safari Balls from PokéStops and Gyms","Up to 6 Special Trades per day","1/2 Stardust cost for trades","Up to 18 free Raid Passes per day from Gyms","5,000 additional XP from completed raids","2× XP from completed Max Battles","6 additional Candy for catching Pokémon in raids","3 additional Candy XL for catching Pokémon in raids (level 31+)","1 additional Candy for catching Pokémon in Max Battles","1 additional Candy XL for catching Pokémon in Max Battles (level 31+)","1/4 Egg Hatch Distance","3× Hatch XP","3× Hatch Candy","3× Hatch Stardust"],"newShiny":[],"evolve":null,"region":"Mexico City","remote":[]},{"id":"gbl-twilight-trails_great-league-mega-edition_ultra-league-mega-edition_master-league-mega-edition-split-3","name":"Great League: Mega Edition, Ultra League: Mega Edition, and Master League: Mega Edition | Twilight Trails","type":"go-battle-league","heading":"GO Battle League","link":"https://leekduck.com/events/gbl-twilight-trails_great-league-mega-edition_ultra-league-mega-edition_master-league-mega-edition-split-3/","start":"2026-11-03T21:00:00.000Z","end":"2026-11-10T21:00:00.000Z","image":"img/c09710d2d89c81b9.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"pokemon-go-wild-area-2026-global","name":"Pokémon GO Wild Area 2026: Global","type":"wild-area","heading":"Wild Area","link":"https://leekduck.com/events/pokemon-go-wild-area-2026-global/","start":"2026-11-14T10:00:00.000","end":"2026-11-15T18:00:00.000","image":"img/c5a64b8c02c097c6.webp","mons":[],"bonuses":["Chance to get GO Safari Balls from PokéStops and Gyms","Up to 3 free Raid Passes per day from Gyms","Daily Max Particle collection limit increased to 1,600","3 GO Snapshot surprise encounters per day","Party Play lasts for 8 hours","Chance to encounter mighty Pokémon on Routes","Increased chance to encounter Shiny Pokémon","Daily Max Particle collection limit increased to 3,200","Increased Max Particles from Power Spots and exploration","Up to 6 free Raid Passes per day from Gyms","2× Candy for catching Pokémon","2× Incense duration","Increased chance of 10 km Eggs from PokéStops and Gyms","6 GO Snapshot surprise encounters per day","Lure Modules last for 2 hours","Up to 6 Special Trades per day","1/2 Stardust cost for trades"],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"gbl-twilight-trails_great-league_ultra-league-mega-edition_2026-go-laic-cup","name":"Great League, Ultra League: Mega Edition, and 2026 GO LAIC Cup | Twilight Trails","type":"go-battle-league","heading":"GO Battle League","link":"https://leekduck.com/events/gbl-twilight-trails_great-league_ultra-league-mega-edition_2026-go-laic-cup/","start":"2026-11-10T21:00:00.000Z","end":"2026-11-17T21:00:00.000Z","image":"img/410cefdeab8e3353.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"minior-showers-leonids-2026","name":"Minior Showers: Leonids 2026","type":"event","heading":"Event","link":"https://leekduck.com/events/minior-showers-leonids-2026/","start":"2026-11-14T17:00:00.000","end":"2026-11-19T23:59:00.000","image":"img/0a8eefe87cdd3d84.webp","mons":[{"name":"Minior","shiny":false,"icon":null,"types":[],"cp20":null,"cp25":null}],"bonuses":["Increased Stardust for catching Minior","Increased chance to encounter Minior from 5:00 p.m. to 9:00 p.m. local time each day"],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"november-communityday2026","name":"November Community Day","type":"community-day","heading":"Community Day","link":"https://leekduck.com/events/november-communityday2026/","start":"2026-11-21T14:00:00.000","end":"2026-11-21T17:00:00.000","image":"img/f69309770998f579.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"gbl-twilight-trails_ultra-league_master-league-mega-edition_2026-go-laic-cup","name":"Ultra League, Master League: Mega Edition, and 2026 GO LAIC Cup | Twilight Trails","type":"go-battle-league","heading":"GO Battle League","link":"https://leekduck.com/events/gbl-twilight-trails_ultra-league_master-league-mega-edition_2026-go-laic-cup/","start":"2026-11-18T21:00:00.000Z","end":"2026-11-25T21:00:00.000Z","image":"img/2b228e0d82d4b14a.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"super-mega-raid-day-november-2026","name":"Super Mega Raid Day","type":"raid-day","heading":"Raid Day","link":"https://leekduck.com/events/super-mega-raid-day-november-2026/","start":"2026-11-28T14:00:00.000","end":"2026-11-28T17:00:00.000","image":"img/615c3a3590590f94.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"season-24-twilight-trails","name":"Twilight Trails","type":"season","heading":"Season","link":"https://leekduck.com/events/season-24-twilight-trails/","start":"2026-09-08T10:00:00.000","end":"2026-12-01T10:00:00.000","image":"img/5ec19f8bd39dac9f.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"gbl-twilight-trails_master-league_mega-catch-cup-great-league-edition","name":"Master League and Mega Catch Cup: Great League Edition | Twilight Trails","type":"go-battle-league","heading":"GO Battle League","link":"https://leekduck.com/events/gbl-twilight-trails_master-league_mega-catch-cup-great-league-edition/","start":"2026-11-24T21:00:00.000Z","end":"2026-12-01T21:00:00.000Z","image":"img/bf77f9d5883bb497.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"minior-showers-geminids-2026","name":"Minior Showers: Geminids 2026","type":"event","heading":"Event","link":"https://leekduck.com/events/minior-showers-geminids-2026/","start":"2026-12-11T17:00:00.000","end":"2026-12-16T23:59:00.000","image":"img/0a8eefe87cdd3d84.webp","mons":[{"name":"Minior","shiny":false,"icon":null,"types":[],"cp20":null,"cp25":null}],"bonuses":["Increased Stardust for catching Minior","Increased chance to encounter Minior from 5:00 p.m. to 9:00 p.m. local time each day"],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"pokemon-x-adidas-2026","name":"adidas × Pokémon Timed Research","type":"research","heading":"Research","link":"https://leekduck.com/events/pokemon-x-adidas-2026/","start":"2026-09-25T10:00:00.000","end":"2027-01-15T20:00:00.000","image":"img/16aae50c8b27bd32.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"pokemon-go-tour-alola-kaohsiung-2027","name":"Pokémon GO Tour: Alola - Kaohsiung 2027","type":"pokemon-go-tour","heading":"Pokémon GO Tour","link":"https://leekduck.com/events/pokemon-go-tour-alola-kaohsiung-2027/","start":"2027-02-18T16:00:00.000Z","end":"2027-02-21T15:59:59.000Z","image":"img/615c3a3590590f94.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":"Kaohsiung","remote":[]},{"id":"pokemon-go-tour-alola-los-angeles-2027","name":"Pokémon GO Tour: Alola - Los Angeles 2027","type":"pokemon-go-tour","heading":"Pokémon GO Tour","link":"https://leekduck.com/events/pokemon-go-tour-alola-los-angeles-2027/","start":"2027-02-19T08:00:00.000Z","end":"2027-02-22T07:59:59.000Z","image":"img/615c3a3590590f94.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":"Los Angeles","remote":[]},{"id":"pokemon-go-tour-alola-global-2027","name":"Pokémon GO Tour: Alola - Global 2027","type":"pokemon-go-tour","heading":"Pokémon GO Tour","link":"https://leekduck.com/events/pokemon-go-tour-alola-global-2027/","start":"2027-02-27T00:00:00.000","end":"2027-02-28T23:59:59.000","image":"img/615c3a3590590f94.webp","mons":[],"bonuses":[],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"minior-showers-eta-aquariids-2027","name":"Minior Showers: Eta Aquariids 2027","type":"event","heading":"Event","link":"https://leekduck.com/events/minior-showers-eta-aquariids-2027/","start":"2027-05-03T17:00:00.000","end":"2027-05-08T23:59:00.000","image":"img/0a8eefe87cdd3d84.webp","mons":[{"name":"Minior","shiny":false,"icon":null,"types":[],"cp20":null,"cp25":null}],"bonuses":["Increased Stardust for catching Minior","Increased chance to encounter Minior from 5:00 p.m. to 9:00 p.m. local time each day"],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"minior-showers-southern-delta-aquariids-2027","name":"Minior Showers: Southern Delta Aquariids 2027","type":"event","heading":"Event","link":"https://leekduck.com/events/minior-showers-southern-delta-aquariids-2027/","start":"2027-07-28T17:00:00.000","end":"2027-08-02T23:59:00.000","image":"img/0a8eefe87cdd3d84.webp","mons":[{"name":"Minior","shiny":false,"icon":null,"types":[],"cp20":null,"cp25":null}],"bonuses":["Increased Stardust for catching Minior","Increased chance to encounter Minior from 5:00 p.m. to 9:00 p.m. local time each day"],"newShiny":[],"evolve":null,"region":null,"remote":[]},{"id":"minior-showers-perseids-2027","name":"Minior Showers: Perseids 2027","type":"event","heading":"Event","link":"https://leekduck.com/events/minior-showers-perseids-2027/","start":"2027-08-10T17:00:00.000","end":"2027-08-15T23:59:00.000","image":"img/0a8eefe87cdd3d84.webp","mons":[{"name":"Minior","shiny":false,"icon":null,"types":[],"cp20":null,"cp25":null}],"bonuses":["Increased Stardust for catching Minior","Increased chance to encounter Minior from 5:00 p.m. to 9:00 p.m. local time each day"],"newShiny":[],"evolve":null,"region":null,"remote":[]}],"bosses":[{"name":"Galarian Farfetch'd","tier":"1-Star","types":["fighting"],"shiny":true,"cp20":956,"cp25":1196,"weather":["cloudy"],"icon":"img/a5adbf37879353c0.webp","start":null,"end":null,"current":true},{"name":"Galarian Zigzagoon","tier":"1-Star","types":["dark","normal"],"shiny":true,"cp20":290,"cp25":363,"weather":["fog","partly cloudy"],"icon":"img/a08ac33de5d3a8ed.webp","start":null,"end":null,"current":true},{"name":"Combee","tier":"1-Star","types":["bug","flying"],"shiny":true,"cp20":282,"cp25":353,"weather":["rainy","windy"],"icon":"img/a42f16129a02476f.webp","start":null,"end":null,"current":true},{"name":"Honedge","tier":"1-Star","types":["steel","ghost"],"shiny":true,"cp20":794,"cp25":993,"weather":["snow","fog"],"icon":"img/aca98ed035ceb455.webp","start":null,"end":null,"current":true},{"name":"Miltank","tier":"3-Star","types":["normal"],"shiny":true,"cp20":1345,"cp25":1682,"weather":["partly cloudy"],"icon":"img/58f1a18e37ae3d3e.webp","start":null,"end":null,"current":true},{"name":"Hisuian Lilligant","tier":"3-Star","types":["grass","fighting"],"shiny":true,"cp20":1435,"cp25":1794,"weather":["sunny","cloudy"],"icon":"img/41e9339aeb014eeb.webp","start":null,"end":null,"current":true},{"name":"Dondozo","tier":"3-Star","types":["water"],"shiny":true,"cp20":1712,"cp25":2140,"weather":["rainy"],"icon":"img/4f27fe1e4d9f602b.webp","start":null,"end":null,"current":true},{"name":"Xerneas","tier":"5-Star","types":["fairy"],"shiny":true,"cp20":2160,"cp25":2701,"weather":["cloudy"],"icon":"img/bde1fd530e2d80d7.webp","start":"2026-09-30T06:00:00.000","end":"2026-10-06T22:00:00.000","current":true},{"name":"Mega Victreebel","tier":"Mega","types":["grass","poison"],"shiny":true,"cp20":1389,"cp25":1736,"weather":["sunny","cloudy"],"icon":"img/e1795cabcc981950.webp","start":"2026-09-30T06:00:00.000","end":"2026-10-06T22:00:00.000","current":true},{"name":"Shadow Machop","tier":"1-Star","types":["fighting"],"shiny":true,"cp20":730,"cp25":913,"weather":["cloudy"],"icon":"img/302a8c53f28ed8ed.webp","start":null,"end":null,"current":true},{"name":"Shadow Bellsprout","tier":"1-Star","types":["grass","poison"],"shiny":true,"cp20":590,"cp25":738,"weather":["sunny","cloudy"],"icon":"img/0dcb0b4c38605f2d.webp","start":null,"end":null,"current":true},{"name":"Shadow Torchic","tier":"1-Star","types":["fire"],"shiny":true,"cp20":624,"cp25":781,"weather":["sunny"],"icon":"img/8ab51e467ce703fc.webp","start":null,"end":null,"current":true},{"name":"Shadow Bagon","tier":"1-Star","types":["dragon"],"shiny":true,"cp20":660,"cp25":826,"weather":["windy"],"icon":"img/6a799cc33e8f309a.webp","start":null,"end":null,"current":true},{"name":"Shadow Alolan Sandslash","tier":"3-Star","types":["ice","steel"],"shiny":true,"cp20":1390,"cp25":1737,"weather":["snow"],"icon":"img/caf25cb822b1d523.webp","start":null,"end":null,"current":true},{"name":"Shadow Quagsire","tier":"3-Star","types":["water","ground"],"shiny":true,"cp20":1138,"cp25":1423,"weather":["rainy","sunny"],"icon":"img/e3bbd62b60db9d0b.webp","start":null,"end":null,"current":true},{"name":"Shadow Lampent","tier":"3-Star","types":["ghost","fire"],"shiny":true,"cp20":976,"cp25":1220,"weather":["fog","sunny"],"icon":"img/a1cb4f77b061205e.webp","start":null,"end":null,"current":true},{"name":"Shadow Thundurus (Incarnate)","tier":"5-Star","types":["electric","flying"],"shiny":true,"cp20":1911,"cp25":2389,"weather":["rainy","windy"],"icon":"img/e735418750123942.webp","start":"2026-09-09T06:00:00.000","end":"2026-10-06T22:00:00.000","current":true},{"name":"Mega Blastoise","tier":"Mega","types":["water"],"shiny":true,"cp20":1409,"cp25":1761,"weather":null,"icon":"img/af690a6532ae824f.webp","start":"2026-10-07T06:00:00.000","end":"2026-10-13T22:00:00.000","current":false},{"name":"Yveltal","tier":"5-Star","types":["dark","flying"],"shiny":true,"cp20":2160,"cp25":2701,"weather":null,"icon":"img/2c1bb584aac778cb.webp","start":"2026-10-07T06:00:00.000","end":"2026-10-13T22:00:00.000","current":false},{"name":"Dialga","tier":"5-Star","types":["steel","dragon"],"shiny":true,"cp20":2307,"cp25":2884,"weather":null,"icon":"img/e72397bede0e159b.webp","start":"2026-10-14T06:00:00.000","end":"2026-10-20T22:00:00.000","current":false},{"name":"Mega Dragonite","tier":"Mega","types":["dragon","flying"],"shiny":true,"cp20":2167,"cp25":2709,"weather":null,"icon":"img/777141181a4da109.webp","start":"2026-10-14T06:00:00.000","end":"2026-10-20T22:00:00.000","current":false},{"name":"Mega Charizard X","tier":"Mega","types":["fire","dragon"],"shiny":true,"cp20":1651,"cp25":2064,"weather":null,"icon":"img/d83ac16ef5e56f0a.webp","start":"2026-10-21T06:00:00.000","end":"2026-10-27T22:00:00.000","current":false},{"name":"Mega Charizard Y","tier":"Mega","types":["fire","flying"],"shiny":true,"cp20":1651,"cp25":2064,"weather":null,"icon":"img/6bcb078942cd32c1.webp","start":"2026-10-21T06:00:00.000","end":"2026-10-27T22:00:00.000","current":false},{"name":"Palkia","tier":"5-Star","types":["water","dragon"],"shiny":true,"cp20":2280,"cp25":2850,"weather":null,"icon":"img/a459e0414ace7bd9.webp","start":"2026-10-21T06:00:00.000","end":"2026-10-27T22:00:00.000","current":false},{"name":"Shadow Landorus (Incarnate)","tier":"5-Star","types":["ground","flying"],"shiny":true,"cp20":2050,"cp25":2563,"weather":null,"icon":"img/3623f0209d997f68.webp","start":"2026-10-07T06:00:00.000","end":"2026-11-03T22:00:00.000","current":false},{"name":"Giratina (Origin)","tier":"5-Star","types":["ghost","dragon"],"shiny":true,"cp20":2105,"cp25":2631,"weather":null,"icon":"img/942b811e1c75aaf4.webp","start":"2026-10-28T06:00:00.000","end":"2026-11-03T22:00:00.000","current":false},{"name":"Mega Sableye","tier":"Mega","types":["dark","ghost"],"shiny":true,"cp20":843,"cp25":1054,"weather":null,"icon":"img/2fe58874bb7310bc.webp","start":"2026-10-28T06:00:00.000","end":"2026-11-03T22:00:00.000","current":false}]};
+
+const TYPE_COLOR = {
+  normal:"#85856a", fire:"#d0601a", water:"#3a6fd0", electric:"#a88700", grass:"#47902b", ice:"#2f8f8b",
+  fighting:"#b02a24", poison:"#8a3a8a", ground:"#9c7828", flying:"#6f5ec8", psychic:"#d03c68", bug:"#768a14",
+  rock:"#8c7826", ghost:"#5e4a8a", dragon:"#5a2ee0", dark:"#5a4636", steel:"#6e6e8a", fairy:"#c0508a"
+};
+// attacking type -> [super effective vs, not very effective vs, immune (double resist in GO)]
+const CHART = {
+  normal:[[],["rock","steel"],["ghost"]],
+  fire:[["grass","ice","bug","steel"],["fire","water","rock","dragon"],[]],
+  water:[["fire","ground","rock"],["water","grass","dragon"],[]],
+  electric:[["water","flying"],["electric","grass","dragon"],["ground"]],
+  grass:[["water","ground","rock"],["fire","grass","poison","flying","bug","dragon","steel"],[]],
+  ice:[["grass","ground","flying","dragon"],["fire","water","ice","steel"],[]],
+  fighting:[["normal","ice","rock","dark","steel"],["poison","flying","psychic","bug","fairy"],["ghost"]],
+  poison:[["grass","fairy"],["poison","ground","rock","ghost"],["steel"]],
+  ground:[["fire","electric","poison","rock","steel"],["grass","bug"],["flying"]],
+  flying:[["grass","fighting","bug"],["electric","rock","steel"],[]],
+  psychic:[["fighting","poison"],["psychic","steel"],["dark"]],
+  bug:[["grass","psychic","dark"],["fire","fighting","poison","flying","ghost","steel","fairy"],[]],
+  rock:[["fire","ice","flying","bug"],["fighting","ground","steel"],[]],
+  ghost:[["psychic","ghost"],["dark"],["normal"]],
+  dragon:[["dragon"],["steel"],["fairy"]],
+  dark:[["psychic","ghost"],["fighting","dark","fairy"],[]],
+  steel:[["ice","rock","fairy"],["fire","water","electric","steel"],[]],
+  fairy:[["fighting","dragon","dark"],["fire","poison","steel"],[]]
+};
+const WEATHER = {
+  sunny:["fire","grass","ground"], rainy:["water","electric","bug"], "partly cloudy":["normal","rock"],
+  cloudy:["fairy","fighting","poison"], windy:["dragon","flying","psychic"], snow:["ice","steel"], fog:["dark","ghost"]
+};
+const WX_ICON = { sunny:"☀️", rainy:"🌧️", "partly cloudy":"⛅", cloudy:"☁️", windy:"💨", snow:"❄️", fog:"🌫️" };
+const KIND = {
+  "community-day":"Community Day", "pokemon-spotlight-hour":"Spotlight Hour", "raid-hour":"Raid Hour",
+  "raid-day":"Raid Day", "max-battles":"Max Battle Day", "max-mondays":"Max Monday", "event":"Event",
+  "go-battle-league":"GO Battle League", "go-pass":"GO Pass", "season":"Season", "wild-area":"Wild Area",
+  "pokemon-go-tour":"GO Tour", "research":"Research", "twitch-drops":"Twitch Drops", "raid-battles":"Raid rotation"
+};
+const BACKGROUND_KINDS = ["season", "go-pass", "research", "go-battle-league", "twitch-drops"];
+const BATTLE_KINDS = ["raid-hour", "raid-day", "raid-battles", "max-battles", "max-mondays"];
+
+// ---------- helpers
+const store = {
+  get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} }
+};
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+const dt = s => s ? new Date(s) : null;
+const startOfDay = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const mondayOf = d => { const x = startOfDay(d); return addDays(x, -((x.getDay() + 6) % 7)); };
+const sameDay = (a, b) => startOfDay(a).getTime() === startOfDay(b).getTime();
+const fmtTime = d => d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }).replace(":00", "").replace(/\s/g, " ");
+const fmtMD = d => d.toLocaleDateString([], { month: "short", day: "numeric" });
+const fmtDow = d => d.toLocaleDateString([], { weekday: "short" });
+const fmtDowLong = d => d.toLocaleDateString([], { weekday: "long" });
+function rel(ms) {
+  const m = Math.max(1, Math.round(ms / 60000));
+  if (m < 60) return m + "m";
+  const h = Math.floor(m / 60);
+  if (h < 48) return h + "h" + (m % 60 && h < 10 ? " " + (m % 60) + "m" : "");
+  return Math.round(h / 24) + "d";
+}
+// an event ending exactly at midnight belongs to the previous day
+const lastDay = e => startOfDay(new Date(dt(e.end) - 1));
+const isMulti = e => !sameDay(dt(e.start), lastDay(e));
+const overlaps = (e, a, b) => dt(e.start) < b && dt(e.end) > a;
+
+function weaknesses(defTypes) {
+  const out = [];
+  for (const atk of Object.keys(CHART)) {
+    let m = 1;
+    const [se, nve, imm] = CHART[atk];
+    for (const d of defTypes) {
+      if (se.includes(d)) m *= 1.6; else if (nve.includes(d)) m *= 0.625; else if (imm.includes(d)) m *= 0.390625;
+    }
+    if (m > 1.01) out.push([atk, m]);
+  }
+  return out.sort((a, b) => b[1] - a[1]);
+}
+const boostWeather = types => Object.keys(WEATHER).filter(w => WEATHER[w].some(t => types.includes(t)));
+const wxIcons = list => list.map(w => `<span title="${esc(w)}">${WX_ICON[w] || esc(w)}</span>`).join("");
+const chip = (t, extra = "") => `<span class="type" style="--t:${TYPE_COLOR[t] || "#777"}">${esc(t)}${extra}</span>`;
+
+// ---------- data
+const EVENTS = DATA.events.filter(e => e.start && e.end);
+const BOSSES = DATA.bosses;
+let weekStart = mondayOf(new Date());
+let showPast = false;
+const thisMonday = () => mondayOf(new Date());
+const lastDataWeek = mondayOf(new Date(Math.max(...EVENTS.filter(e => !BACKGROUND_KINDS.includes(e.type)).map(e => +dt(e.start)))));
+
+// ---------- event cards
+function monHtml(m, battle) {
+  const wx = m.types && m.types.length ? boostWeather(m.types) : [];
+  const weak = battle && m.types && m.types.length ? weaknesses(m.types) : [];
+  return `<div class="mon">
+    ${m.icon ? `<img src="${m.icon}" alt="">` : "<span></span>"}
+    <div>
+      <div class="mn">${esc(m.name)}${m.shiny ? `<span class="shiny" title="Can be shiny">&nbsp;✦ shiny</span>` : ""}</div>
+      ${m.cp20 ? `<div class="stats"><span>100% <b>${m.cp20}</b></span>${m.cp25 ? `<span>Boosted <b>${m.cp25}</b></span>` : ""}${m.cp25 && wx.length ? `<span class="wx">${wxIcons(wx)}</span>` : ""}</div>` : ""}
+      ${weak.length ? `<div class="weakline">Weak:${weak.slice(0, 6).map(w => chip(w[0], w[1] > 2 ? " ×2" : "")).join("")}</div>` : ""}
+    </div>
+  </div>`;
+}
+
+function shortEvolve(s) {
+  return s.replace(/ during the event or up to (\w+) hours afterwards?/i, " (until $1 hours after)")
+          .replace(/ to get an? /i, " → ")
+          .replace(/ that knows the (Fast|Charged) Attacks? /i, " with ");
+}
+const shortBonus = b => b.length > 70 ? b.slice(0, 68).replace(/\s+\S*$/, "") + "…" : b;
+
+// mode: "day" (single-day event), "week" (multi-day event), "raid" (raid rotation)
+function cardHtml(e, mode, now) {
+  const s = dt(e.start), en = dt(e.end);
+  const live = s <= now && now < en;
+  let when, state = "";
+  if (mode === "day") when = `${fmtTime(s)}–${fmtTime(en)}`;
+  else if (mode === "raid") when = `${fmtMD(s)} – ${fmtMD(en)}`;
+  else when = live ? `until ${fmtDow(en)} ${fmtMD(en)} ${fmtTime(en)}` : `${fmtMD(s)} – ${fmtMD(en)}`;
+  if (mode !== "raid") {
+    if (live) state = `<span class="state live">LIVE · ${rel(en - now)} left</span>`;
+    else if (s > now && s - now < 36 * 3600e3) state = `<span class="state soon">in ${rel(s - now)}</span>`;
+  }
+  if (e.region) {  // region-locked: just say where, skip the details
+    return `<article class="ev compact">
+      <a class="thumb" href="${esc(e.link)}" target="_blank" rel="noopener" aria-label="Open event page">${e.image ? `<img src="${e.image}" alt="" loading="lazy">` : ""}</a>
+      <div class="evbody">
+        <div class="evtop"><span class="when">${when}</span></div>
+        <div class="name"><a href="${esc(e.link)}" target="_blank" rel="noopener">${esc(e.name)}</a></div>
+        <div class="region">📍 ${e.region === "Location-specific" ? "Location-specific event" : "Only in " + esc(e.region)}</div>
+      </div>
+    </article>`;
+  }
+  const battle = BATTLE_KINDS.includes(e.type);
+  const facts = [];
+  (e.remote || []).forEach(r => facts.push(`<li class="rr">${esc(r)}</li>`));
+  if (e.evolve) facts.push(`<li class="evo">${esc(shortEvolve(e.evolve))}</li>`);
+  if (e.newShiny && e.newShiny.length) facts.push(`<li class="sh"><strong>New shiny:</strong> ${e.newShiny.map(esc).join(", ")}</li>`);
+  const bonuses = e.bonuses || [];
+  bonuses.slice(0, 3).forEach(b => facts.push(`<li>${esc(shortBonus(b))}</li>`));
+  if (bonuses.length > 3) facts.push(`<li>+${bonuses.length - 3} more bonuses on the event page</li>`);
+
+  return `<article class="ev${live && mode === "day" ? " live" : ""}">
+    <a class="thumb" href="${esc(e.link)}" target="_blank" rel="noopener" aria-label="Open event page">${e.image ? `<img src="${e.image}" alt="" loading="lazy">` : ""}</a>
+    <div class="evbody">
+      <div class="evtop"><span class="when">${when}</span>${state}</div>
+      <div class="kind${e.type === "community-day" ? " k-cd" : ""}">${esc(KIND[e.type] || e.heading)}</div>
+      <div class="name"><a href="${esc(e.link)}" target="_blank" rel="noopener">${esc(e.name)}</a></div>
+      ${e.mons && e.mons.length ? `<div class="mons">${e.mons.map(m => monHtml(m, battle)).join("")}</div>` : ""}
+      ${facts.length ? `<ul class="facts">${facts.join("")}</ul>` : ""}
+      ${mode === "raid" ? "" : `<div class="social" data-ev="${esc(e.id)}"></div>`}
+    </div>
+  </article>`;
+}
+
+// ---------- week view
+function renderWeek() {
+  const now = new Date();
+  const ws = weekStart, we = addDays(ws, 7);
+  const days = [...Array(7)].map((_, i) => addDays(ws, i));
+  const inWeek = EVENTS.filter(e => overlaps(e, ws, we));
+  const visible = inWeek.filter(e => !BACKGROUND_KINDS.includes(e.type));
+  const raids = visible.filter(e => e.type === "raid-battles");
+  const normal = visible.filter(e => e.type !== "raid-battles");
+  const multi = normal.filter(isMulti).sort((a, b) => dt(a.end) - dt(b.end));
+  const single = normal.filter(e => !isMulti(e));
+  const isThisWeek = +ws === +thisMonday();
+
+  const perDay = days.map(d => [
+    ...single.filter(e => sameDay(dt(e.start), d)).map(e => ({ e, mode: "day" })),
+    ...raids.filter(e => sameDay(dt(e.start), d)).map(e => ({ e, mode: "raid" })),
+  ].sort((a, b) => dt(a.e.start) - dt(b.e.start)));
+
+  let html = `<div class="range">${fmtMD(ws)} – ${fmtMD(addDays(ws, 6))}${isThisWeek ? "" : `<button id="today">Back to this week</button>`}</div>
+  <div class="weekbar">
+    <button class="navbtn" id="prev" aria-label="Previous week">‹</button>
+    <div class="strip">${days.map((d, i) => {
+      const cls = ["dayhead", sameDay(d, now) ? "today" : "", d < startOfDay(now) ? "past" : "", perDay[i].length ? "has" : ""].join(" ");
+      return `<button class="${cls}" data-day="${i}" aria-label="${fmtDowLong(d)} ${fmtMD(d)}"><span class="dow">${fmtDow(d)}</span><span class="num">${d.getDate()}</span></button>`;
+    }).join("")}</div>
+    <button class="navbtn" id="next" aria-label="Next week" ${+ws >= +lastDataWeek ? "disabled" : ""}>›</button>
+  </div>`;
+
+  const pastCount = days.filter(d => d < startOfDay(now)).length;
+  days.forEach((d, i) => {
+    const today = sameDay(d, now);
+    const past = d < startOfDay(now);
+    if (past && !showPast) return;
+    html += `<section class="day${past ? " past" : ""}" id="day-${i}">
+      <h2 class="dayh">${today ? "Today" : fmtDowLong(d)} <span class="date">${today ? fmtDow(d) + " " : ""}${fmtMD(d)}</span></h2>
+      ${perDay[i].length ? `<div class="cards">${perDay[i].map(x => cardHtml(x.e, x.mode, now)).join("")}</div>` : `<div class="quiet">No special events.</div>`}
+    </section>`;
+  });
+  if (pastCount && !showPast) {
+    html += `<button class="linkbtn" id="showpast">Show earlier days (${fmtDow(days[0])}${pastCount > 1 ? "–" + fmtDow(days[pastCount - 1]) : ""})</button>`;
+  }
+
+  html += raidSectionHtml(ws, we, now);
+
+  if (multi.length) {
+    html += `<h2 class="sec">All week</h2><div class="cards">${multi.map(e => cardHtml(e, "week", now)).join("")}</div>`;
+  }
+
+  const bg = inWeek.filter(e => BACKGROUND_KINDS.includes(e.type));
+  if (bg.length) {
+    html += `<div class="also"><div class="tierlabel" style="margin:0 0 4px">Also running</div>${bg.map(e =>
+      `<div><a href="${esc(e.link)}" target="_blank" rel="noopener">${esc(e.name)}</a> · until ${fmtMD(dt(e.end))}</div>`).join("")}</div>`;
+  }
+
+  const el = document.getElementById("view-week");
+  el.innerHTML = html;
+  window.dispatchEvent(new Event("pogo:render"));  // lets the website's social layer fill .social slots
+  el.querySelector("#prev").onclick = () => { weekStart = addDays(weekStart, -7); showPast = false; renderWeek(); };
+  el.querySelector("#next").onclick = () => { weekStart = addDays(weekStart, 7); showPast = false; renderWeek(); };
+  const t = el.querySelector("#today"); if (t) t.onclick = () => { weekStart = thisMonday(); showPast = false; renderWeek(); };
+  const sp = el.querySelector("#showpast"); if (sp) sp.onclick = () => { showPast = true; renderWeek(); };
+  el.querySelectorAll(".dayhead").forEach(b => b.addEventListener("click", () => {
+    if (!document.getElementById("day-" + b.dataset.day)) { showPast = true; renderWeek(); }
+    document.getElementById("day-" + b.dataset.day)
+      .scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  }));
+}
+
+// ---------- raid bosses
+function bossHtml(b, showWindow) {
+  const weak = weaknesses(b.types);
+  const dbl = weak.filter(w => w[1] > 2), sgl = weak.filter(w => w[1] <= 2);
+  const wx = b.weather && b.weather.length ? b.weather : boostWeather(b.types);
+  const s = dt(b.start), en = dt(b.end);
+  return `<article class="boss">
+    <div>${b.icon ? `<img class="pic" src="${b.icon}" alt="">` : ""}</div>
+    <div class="bbody">
+      <div class="kind">${esc(b.tier)}${b.shiny ? ` · <span class="shiny">✦ shiny</span>` : ""}</div>
+      <div class="name">${esc(b.name)}</div>
+      <div class="types">${b.types.map(t => chip(t)).join("")}</div>
+      ${showWindow && s && en ? `<div class="window">${fmtDow(s)} ${fmtMD(s)} → ${fmtDow(en)} ${fmtMD(en)}</div>` : ""}
+      ${b.cp20 ? `<div class="stats"><span>100% <b>${b.cp20}</b></span><span>Boosted <b>${b.cp25}</b></span>${wx.length ? `<span class="wx">${wxIcons(wx)}</span>` : ""}</div>` : ""}
+      <div class="weak">
+        ${dbl.length ? `<div class="weak-row dbl"><b>2× weak</b>${dbl.map(w => chip(w[0])).join("")}</div>` : ""}
+        ${sgl.length ? `<div class="weak-row"><b>weak</b>${sgl.map(w => chip(w[0])).join("")}</div>` : ""}
+      </div>
+    </div>
+  </article>`;
+}
+function bossesInWindow(a, b, now) {
+  return BOSSES.filter(x => {
+    if (x.start && x.end) return dt(x.start) < b && dt(x.end) > a;
+    return x.current && now >= a && now < b;
+  });
+}
+const TIER_ORDER = ["5-Star", "Mega", "3-Star", "1-Star"];
+const tierRank = t => { const i = TIER_ORDER.findIndex(o => t.includes(o)); return i < 0 ? 9 : i; };
+
+function raidSectionHtml(ws, we, now) {
+  const list = bossesInWindow(ws, we, now).filter(b => tierRank(b.tier) <= 1)
+    .sort((a, b) => tierRank(a.tier) - tierRank(b.tier) || dt(a.start || 0) - dt(b.start || 0));
+  if (!list.length) return "";
+  // group by how the boss sits in this week: new this week, all week, leaving early
+  const starts = b => b.start && dt(b.start) > ws;
+  const leaves = b => b.end && dt(b.end) < we && !starts(b);
+  const groups = [
+    ["New this week", list.filter(starts)],
+    ["All week", list.filter(b => !starts(b) && !leaves(b))],
+    ["Leaving soon", list.filter(leaves)],
+  ].filter(g => g[1].length);
+  return `<h2 class="sec">Raid bosses this week</h2><p class="sec-sub">5-star, Shadow 5-star and Mega. All tiers are on the Raids tab.</p>` +
+    groups.map(([label, bs]) => `<div class="tierlabel">${label}</div>
+      <div class="bosses${label === "Leaving soon" ? " leaving" : ""}">${bs.map(b => bossHtml(b, true)).join("")}</div>`).join("");
+}
+function renderRaids() {
+  const now = new Date();
+  const current = BOSSES.filter(b => b.current);
+  const upcoming = BOSSES.filter(b => !b.current && dt(b.end) > now).sort((a, b) => dt(a.start) - dt(b.start));
+  const tierOf = b => (b.name.startsWith("Shadow") ? "Shadow " : "") + b.tier;
+  const tiers = [...new Set(current.map(tierOf))].sort((a, b) => tierRank(a) - tierRank(b) || a.localeCompare(b));
+  let html = `<h2 class="sec">In raids now</h2>`;
+  for (const t of tiers) {
+    html += `<div class="tierlabel">${esc(t)}</div><div class="bosses">${current.filter(b => tierOf(b) === t).map(b => bossHtml(b, false)).join("")}</div>`;
+  }
+  if (upcoming.length) html += `<h2 class="sec">Coming up</h2><div class="bosses">${upcoming.map(b => bossHtml(b, true)).join("")}</div>`;
+  document.getElementById("view-raids").innerHTML = html;
+}
+
+// ---------- tabs & boot
+function setTab(which) {
+  for (const t of ["week", "raids"]) {
+    document.getElementById("tab-" + t).setAttribute("aria-selected", String(t === which));
+    document.getElementById("view-" + t).hidden = t !== which;
+  }
+  store.set("pogo.tab", which);
+}
+document.getElementById("tab-week").onclick = () => setTab("week");
+document.getElementById("tab-raids").onclick = () => setTab("raids");
+document.getElementById("foot").innerHTML =
+  `Data updated ${fmtMD(new Date(DATA.built))} from <a href="https://leekduck.com/events/" target="_blank" rel="noopener">LeekDuck</a> via ` +
+  `<a href="https://github.com/bigfoott/ScrapedDuck" target="_blank" rel="noopener">ScrapedDuck</a> (event images © Niantic / The Pokémon Company); base stats from pogoapi.net. ` +
+  `Times are local. 100% = hundo CP at level 20 (raid, research, egg and Max Battle catches); Boosted = weather boosted (level 25); icons show the boosting weather. ` +
+  `×2 = double weakness.`;
+
+renderWeek();
+renderRaids();
+setTab(location.hash === "#raids" ? "raids" : store.get("pogo.tab", "week"));
+// refresh countdowns, but never while someone is typing in a form
+setInterval(() => { if (!document.hidden && !document.activeElement?.closest("form")) renderWeek(); }, 60000);
+</script>
+<script type="module" src="social.js"></script></body></html>

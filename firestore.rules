@@ -1,0 +1,33 @@
+rules_version = '2';
+// POGO Squad: anyone using the site (anonymous sign-in) can read and write
+// "going" marks and meetup suggestions; writes are shape- and size-checked.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function shortStr(v, max) { return v is string && v.size() > 0 && v.size() <= max; }
+
+    match /rsvps/{id} {
+      allow read: if signedIn();
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(['eventId', 'name', 'ts'])
+        && shortStr(request.resource.data.eventId, 120)
+        && shortStr(request.resource.data.name, 24);
+      allow delete: if signedIn();
+    }
+
+    match /meetups/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['eventId', 'when', 'place', 'by', 'plus', 'ts'])
+        && shortStr(request.resource.data.eventId, 120)
+        && shortStr(request.resource.data.when, 40)
+        && request.resource.data.place is string && request.resource.data.place.size() <= 60
+        && shortStr(request.resource.data.by, 24)
+        && request.resource.data.plus is list && request.resource.data.plus.size() == 0;
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['plus'])
+        && request.resource.data.plus is list && request.resource.data.plus.size() <= 50;
+      allow delete: if signedIn();
+    }
+  }
+}

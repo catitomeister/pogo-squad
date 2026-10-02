@@ -1,0 +1,470 @@
+<title>POGO Squad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: phone-first. Compact week strip, then Today first. Each event is a self-contained card:
+   time, featured Pokémon with hundo CP / weather / weaknesses, evolve move, new shinies, bonuses. Raid bosses and all-week events below. */
+:root {
+  --bg: #eef2ef;
+  --surface: #ffffff;
+  --ink: #15201c;
+  --muted: #5a6963;
+  --line: #d5ddd8;
+  --accent: #d93a1e;
+  --accent-soft: #fbe3dc;
+  --live: #0f8a5f;
+  --chip: #e9eeeb;
+  --gold: #a87400;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-data: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101614; --surface: #19211e; --ink: #e7eeea; --muted: #94a39c; --line: #2b3632;
+    --accent: #ff6b4a; --accent-soft: #3d1f17; --live: #2fbf86; --chip: #232d29; --gold: #f2c14e;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101614; --surface: #19211e; --ink: #e7eeea; --muted: #94a39c; --line: #2b3632;
+  --accent: #ff6b4a; --accent-soft: #3d1f17; --live: #2fbf86; --chip: #232d29; --gold: #f2c14e;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.45 var(--f-body); }
+.wrap { max-width: 860px; margin: 0 auto; padding-inline: 16px; padding-block: 0 48px; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+a { color: inherit; }
+
+/* Header */
+header.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.top-inner { max-width: 860px; margin: 0 auto; padding-inline: 16px; padding-block: 8px 0; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.brand { white-space: nowrap; font: 800 1.3rem/1 var(--f-display); letter-spacing: -0.02em; padding-bottom: 9px; }
+.brand span { color: var(--accent); }
+.tabs { display: flex; gap: 2px; }
+.tab { white-space: nowrap; appearance: none; border: 0; background: none; color: var(--muted); cursor: pointer; font-weight: 700; font-size: 0.98rem; padding: 4px 8px 8px; border-bottom: 3px solid transparent; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+
+/* Week bar (compact) */
+.range { text-align: center; font: 500 0.82rem var(--f-data); color: var(--muted); margin-top: 8px; }
+.range button { appearance: none; border: 0; background: none; color: var(--accent); font: 700 0.74rem var(--f-body); cursor: pointer; padding: 0 0 0 8px; }
+.weekbar { margin-top: 4px; display: grid; grid-template-columns: 28px minmax(0, 1fr) 28px; gap: 6px; align-items: center; }
+.navbtn { appearance: none; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-size: 1rem; line-height: 1; padding: 0; }
+.navbtn:disabled { opacity: 0.35; cursor: default; }
+.strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+.dayhead { appearance: none; border: 0; background: var(--surface); cursor: pointer; text-align: center; padding: 3px 0 2px; border-radius: 8px; position: relative; }
+.dayhead .dow { display: block; font: 700 0.62rem var(--f-body); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.dayhead .num { display: block; font: 800 1.08rem/1.2 var(--f-display); }
+.dayhead.today { background: var(--accent); }
+.dayhead.today .dow, .dayhead.today .num { color: var(--surface); }
+.dayhead.past { opacity: 0.45; }
+.dayhead.has::after { content: ""; position: absolute; right: 4px; top: 4px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.dayhead.today.has::after { background: var(--surface); }
+.linkbtn { display: block; margin: 14px auto 0; appearance: none; border: 0; background: none; color: var(--accent); font-weight: 700; font-size: 0.82rem; cursor: pointer; }
+
+/* Day sections */
+.day { margin-top: 16px; scroll-margin-top: 64px; }
+.dayh { font: 800 1.35rem var(--f-display); margin: 0 0 8px; display: flex; align-items: baseline; gap: 8px; }
+.dayh .date { font: 500 0.88rem var(--f-data); color: var(--muted); }
+.day.past { opacity: 0.55; }
+.quiet { color: var(--muted); font-size: 0.95rem; }
+
+/* Event card: thumbnail left, everything you need on the right */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 8px; align-items: start; }
+.ev { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+.ev.live { border-color: var(--live); box-shadow: 0 0 0 1.5px var(--live); }
+.thumb { position: relative; background: var(--chip); aspect-ratio: 3 / 1; display: block; }
+.thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.evbody { padding: 10px 14px 14px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.evtop { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.when { font: 700 1rem var(--f-data); font-variant-numeric: tabular-nums; }
+.state { font: 700 0.8rem var(--f-data); padding: 2px 9px; border-radius: 999px; }
+.state.live { background: var(--live); color: var(--surface); }
+.state.soon { background: var(--accent); color: var(--surface); }
+.kind { font: 700 0.72rem var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.kind.k-cd { color: var(--accent); }
+.name { font-weight: 700; font-size: 1.15rem; line-height: 1.25; text-wrap: balance; }
+.name a { text-decoration: none; }
+.name a:hover { text-decoration: underline; }
+.name a::after { content: " ↗"; color: var(--muted); font-weight: 400; font-size: 0.8em; }
+
+.mons { display: grid; gap: 4px; }
+.mon { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 8px; align-items: center; background: var(--chip); border-radius: 12px; padding: 6px 10px 6px 6px; }
+.mon img { width: 52px; height: 52px; object-fit: contain; }
+.mn { font-weight: 700; font-size: 1.05rem; line-height: 1.25; }
+.stats { display: flex; flex-wrap: wrap; gap: 0 12px; font-size: 0.85rem; color: var(--muted); align-items: baseline; }
+.stats b { font: 700 1.02rem var(--f-data); color: var(--ink); font-variant-numeric: tabular-nums; }
+.wx { font-size: 1rem; letter-spacing: 2px; }
+.weakline { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 4px; font-size: 0.8rem; color: var(--muted); }
+.shiny { color: var(--gold); font-weight: 700; font-size: 0.9rem; }
+.ev.compact { opacity: 0.8; display: grid; grid-template-columns: 72px minmax(0, 1fr); }
+.ev.compact .thumb { aspect-ratio: auto; height: 100%; min-height: 72px; }
+.ev.compact .evbody { padding: 8px 12px; gap: 2px; }
+.ev.compact .name { font-size: 1rem; }
+.region { font-size: 0.95rem; font-weight: 700; color: var(--muted); }
+
+.facts { display: grid; gap: 4px; margin: 2px 0 0; padding: 0; list-style: none; font-size: 0.95rem; line-height: 1.35; }
+.facts li { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 4px; }
+.facts li::before { content: "•"; color: var(--accent); font-weight: 700; }
+.facts li.evo::before { content: "↑"; }
+.facts li.sh::before { content: "✦"; color: var(--gold); }
+.facts li.rr { font-weight: 700; color: var(--accent); }
+.facts li.rr::before { content: "⇄"; }
+.facts strong { font-weight: 700; }
+
+/* Raids */
+.sec { font: 800 1.35rem var(--f-display); margin: 30px 0 4px; }
+.sec-sub { color: var(--muted); font-size: 0.92rem; margin: 0 0 10px; }
+.bosses { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 8px; }
+.boss { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; }
+.bosses.leaving .boss { opacity: 0.6; }
+.boss .pic { width: 64px; height: 64px; object-fit: contain; }
+.bbody { display: grid; gap: 3px; min-width: 0; }
+.types { display: flex; gap: 4px; flex-wrap: wrap; }
+.type { font: 700 0.72rem var(--f-body); text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 7px; border-radius: 6px; color: #fff; background: var(--t, #777); }
+.weak { margin-top: 4px; display: grid; gap: 3px; }
+.weak-row { display: flex; gap: 3px; align-items: center; flex-wrap: wrap; }
+.weak-row b { font: 700 0.78rem var(--f-data); width: 58px; color: var(--muted); }
+.weak-row.dbl b { color: var(--accent); }
+.window { font-size: 0.88rem; color: var(--muted); }
+.tierlabel { font: 700 0.7rem var(--f-body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 16px 0 8px; }
+
+.social:empty { display: none; }
+.also { margin-top: 26px; font-size: 0.82rem; color: var(--muted); display: grid; gap: 4px; }
+.also a { color: var(--ink); font-weight: 700; text-decoration: none; }
+footer { margin-top: 32px; font-size: 0.76rem; color: var(--muted); }
+footer a { color: var(--muted); }
+</style>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">POGO <span>Squad</span></div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-week" aria-selected="true" aria-controls="view-week">Week</button>
+      <button class="tab" role="tab" id="tab-raids" aria-selected="false" aria-controls="view-raids">Raids</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="view-week" role="tabpanel" aria-labelledby="tab-week"></section>
+  <section id="view-raids" role="tabpanel" aria-labelledby="tab-raids" hidden></section>
+  <footer id="foot"></footer>
+</main>
+
+<script>
+const DATA = /*__DATA__*/null;
+
+const TYPE_COLOR = {
+  normal:"#85856a", fire:"#d0601a", water:"#3a6fd0", electric:"#a88700", grass:"#47902b", ice:"#2f8f8b",
+  fighting:"#b02a24", poison:"#8a3a8a", ground:"#9c7828", flying:"#6f5ec8", psychic:"#d03c68", bug:"#768a14",
+  rock:"#8c7826", ghost:"#5e4a8a", dragon:"#5a2ee0", dark:"#5a4636", steel:"#6e6e8a", fairy:"#c0508a"
+};
+// attacking type -> [super effective vs, not very effective vs, immune (double resist in GO)]
+const CHART = {
+  normal:[[],["rock","steel"],["ghost"]],
+  fire:[["grass","ice","bug","steel"],["fire","water","rock","dragon"],[]],
+  water:[["fire","ground","rock"],["water","grass","dragon"],[]],
+  electric:[["water","flying"],["electric","grass","dragon"],["ground"]],
+  grass:[["water","ground","rock"],["fire","grass","poison","flying","bug","dragon","steel"],[]],
+  ice:[["grass","ground","flying","dragon"],["fire","water","ice","steel"],[]],
+  fighting:[["normal","ice","rock","dark","steel"],["poison","flying","psychic","bug","fairy"],["ghost"]],
+  poison:[["grass","fairy"],["poison","ground","rock","ghost"],["steel"]],
+  ground:[["fire","electric","poison","rock","steel"],["grass","bug"],["flying"]],
+  flying:[["grass","fighting","bug"],["electric","rock","steel"],[]],
+  psychic:[["fighting","poison"],["psychic","steel"],["dark"]],
+  bug:[["grass","psychic","dark"],["fire","fighting","poison","flying","ghost","steel","fairy"],[]],
+  rock:[["fire","ice","flying","bug"],["fighting","ground","steel"],[]],
+  ghost:[["psychic","ghost"],["dark"],["normal"]],
+  dragon:[["dragon"],["steel"],["fairy"]],
+  dark:[["psychic","ghost"],["fighting","dark","fairy"],[]],
+  steel:[["ice","rock","fairy"],["fire","water","electric","steel"],[]],
+  fairy:[["fighting","dragon","dark"],["fire","poison","steel"],[]]
+};
+const WEATHER = {
+  sunny:["fire","grass","ground"], rainy:["water","electric","bug"], "partly cloudy":["normal","rock"],
+  cloudy:["fairy","fighting","poison"], windy:["dragon","flying","psychic"], snow:["ice","steel"], fog:["dark","ghost"]
+};
+const WX_ICON = { sunny:"☀️", rainy:"🌧️", "partly cloudy":"⛅", cloudy:"☁️", windy:"💨", snow:"❄️", fog:"🌫️" };
+const KIND = {
+  "community-day":"Community Day", "pokemon-spotlight-hour":"Spotlight Hour", "raid-hour":"Raid Hour",
+  "raid-day":"Raid Day", "max-battles":"Max Battle Day", "max-mondays":"Max Monday", "event":"Event",
+  "go-battle-league":"GO Battle League", "go-pass":"GO Pass", "season":"Season", "wild-area":"Wild Area",
+  "pokemon-go-tour":"GO Tour", "research":"Research", "twitch-drops":"Twitch Drops", "raid-battles":"Raid rotation"
+};
+const BACKGROUND_KINDS = ["season", "go-pass", "research", "go-battle-league", "twitch-drops"];
+const BATTLE_KINDS = ["raid-hour", "raid-day", "raid-battles", "max-battles", "max-mondays"];
+
+// ---------- helpers
+const store = {
+  get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} }
+};
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+const dt = s => s ? new Date(s) : null;
+const startOfDay = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const mondayOf = d => { const x = startOfDay(d); return addDays(x, -((x.getDay() + 6) % 7)); };
+const sameDay = (a, b) => startOfDay(a).getTime() === startOfDay(b).getTime();
+const fmtTime = d => d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }).replace(":00", "").replace(/\s/g, " ");
+const fmtMD = d => d.toLocaleDateString([], { month: "short", day: "numeric" });
+const fmtDow = d => d.toLocaleDateString([], { weekday: "short" });
+const fmtDowLong = d => d.toLocaleDateString([], { weekday: "long" });
+function rel(ms) {
+  const m = Math.max(1, Math.round(ms / 60000));
+  if (m < 60) return m + "m";
+  const h = Math.floor(m / 60);
+  if (h < 48) return h + "h" + (m % 60 && h < 10 ? " " + (m % 60) + "m" : "");
+  return Math.round(h / 24) + "d";
+}
+// an event ending exactly at midnight belongs to the previous day
+const lastDay = e => startOfDay(new Date(dt(e.end) - 1));
+const isMulti = e => !sameDay(dt(e.start), lastDay(e));
+const overlaps = (e, a, b) => dt(e.start) < b && dt(e.end) > a;
+
+function weaknesses(defTypes) {
+  const out = [];
+  for (const atk of Object.keys(CHART)) {
+    let m = 1;
+    const [se, nve, imm] = CHART[atk];
+    for (const d of defTypes) {
+      if (se.includes(d)) m *= 1.6; else if (nve.includes(d)) m *= 0.625; else if (imm.includes(d)) m *= 0.390625;
+    }
+    if (m > 1.01) out.push([atk, m]);
+  }
+  return out.sort((a, b) => b[1] - a[1]);
+}
+const boostWeather = types => Object.keys(WEATHER).filter(w => WEATHER[w].some(t => types.includes(t)));
+const wxIcons = list => list.map(w => `<span title="${esc(w)}">${WX_ICON[w] || esc(w)}</span>`).join("");
+const chip = (t, extra = "") => `<span class="type" style="--t:${TYPE_COLOR[t] || "#777"}">${esc(t)}${extra}</span>`;
+
+// ---------- data
+const EVENTS = DATA.events.filter(e => e.start && e.end);
+const BOSSES = DATA.bosses;
+let weekStart = mondayOf(new Date());
+let showPast = false;
+const thisMonday = () => mondayOf(new Date());
+const lastDataWeek = mondayOf(new Date(Math.max(...EVENTS.filter(e => !BACKGROUND_KINDS.includes(e.type)).map(e => +dt(e.start)))));
+
+// ---------- event cards
+function monHtml(m, battle) {
+  const wx = m.types && m.types.length ? boostWeather(m.types) : [];
+  const weak = battle && m.types && m.types.length ? weaknesses(m.types) : [];
+  return `<div class="mon">
+    ${m.icon ? `<img src="${m.icon}" alt="">` : "<span></span>"}
+    <div>
+      <div class="mn">${esc(m.name)}${m.shiny ? `<span class="shiny" title="Can be shiny">&nbsp;✦ shiny</span>` : ""}</div>
+      ${m.cp20 ? `<div class="stats"><span>100% <b>${m.cp20}</b></span>${m.cp25 ? `<span>Boosted <b>${m.cp25}</b></span>` : ""}${m.cp25 && wx.length ? `<span class="wx">${wxIcons(wx)}</span>` : ""}</div>` : ""}
+      ${weak.length ? `<div class="weakline">Weak:${weak.slice(0, 6).map(w => chip(w[0], w[1] > 2 ? " ×2" : "")).join("")}</div>` : ""}
+    </div>
+  </div>`;
+}
+
+function shortEvolve(s) {
+  return s.replace(/ during the event or up to (\w+) hours afterwards?/i, " (until $1 hours after)")
+          .replace(/ to get an? /i, " → ")
+          .replace(/ that knows the (Fast|Charged) Attacks? /i, " with ");
+}
+const shortBonus = b => b.length > 70 ? b.slice(0, 68).replace(/\s+\S*$/, "") + "…" : b;
+
+// mode: "day" (single-day event), "week" (multi-day event), "raid" (raid rotation)
+function cardHtml(e, mode, now) {
+  const s = dt(e.start), en = dt(e.end);
+  const live = s <= now && now < en;
+  let when, state = "";
+  if (mode === "day") when = `${fmtTime(s)}–${fmtTime(en)}`;
+  else if (mode === "raid") when = `${fmtMD(s)} – ${fmtMD(en)}`;
+  else when = live ? `until ${fmtDow(en)} ${fmtMD(en)} ${fmtTime(en)}` : `${fmtMD(s)} – ${fmtMD(en)}`;
+  if (mode !== "raid") {
+    if (live) state = `<span class="state live">LIVE · ${rel(en - now)} left</span>`;
+    else if (s > now && s - now < 36 * 3600e3) state = `<span class="state soon">in ${rel(s - now)}</span>`;
+  }
+  if (e.region) {  // region-locked: just say where, skip the details
+    return `<article class="ev compact">
+      <a class="thumb" href="${esc(e.link)}" target="_blank" rel="noopener" aria-label="Open event page">${e.image ? `<img src="${e.image}" alt="" loading="lazy">` : ""}</a>
+      <div class="evbody">
+        <div class="evtop"><span class="when">${when}</span></div>
+        <div class="name"><a href="${esc(e.link)}" target="_blank" rel="noopener">${esc(e.name)}</a></div>
+        <div class="region">📍 ${e.region === "Location-specific" ? "Location-specific event" : "Only in " + esc(e.region)}</div>
+      </div>
+    </article>`;
+  }
+  const battle = BATTLE_KINDS.includes(e.type);
+  const facts = [];
+  (e.remote || []).forEach(r => facts.push(`<li class="rr">${esc(r)}</li>`));
+  if (e.evolve) facts.push(`<li class="evo">${esc(shortEvolve(e.evolve))}</li>`);
+  if (e.newShiny && e.newShiny.length) facts.push(`<li class="sh"><strong>New shiny:</strong> ${e.newShiny.map(esc).join(", ")}</li>`);
+  const bonuses = e.bonuses || [];
+  bonuses.slice(0, 3).forEach(b => facts.push(`<li>${esc(shortBonus(b))}</li>`));
+  if (bonuses.length > 3) facts.push(`<li>+${bonuses.length - 3} more bonuses on the event page</li>`);
+
+  return `<article class="ev${live && mode === "day" ? " live" : ""}">
+    <a class="thumb" href="${esc(e.link)}" target="_blank" rel="noopener" aria-label="Open event page">${e.image ? `<img src="${e.image}" alt="" loading="lazy">` : ""}</a>
+    <div class="evbody">
+      <div class="evtop"><span class="when">${when}</span>${state}</div>
+      <div class="kind${e.type === "community-day" ? " k-cd" : ""}">${esc(KIND[e.type] || e.heading)}</div>
+      <div class="name"><a href="${esc(e.link)}" target="_blank" rel="noopener">${esc(e.name)}</a></div>
+      ${e.mons && e.mons.length ? `<div class="mons">${e.mons.map(m => monHtml(m, battle)).join("")}</div>` : ""}
+      ${facts.length ? `<ul class="facts">${facts.join("")}</ul>` : ""}
+      ${mode === "raid" ? "" : `<div class="social" data-ev="${esc(e.id)}"></div>`}
+    </div>
+  </article>`;
+}
+
+// ---------- week view
+function renderWeek() {
+  const now = new Date();
+  const ws = weekStart, we = addDays(ws, 7);
+  const days = [...Array(7)].map((_, i) => addDays(ws, i));
+  const inWeek = EVENTS.filter(e => overlaps(e, ws, we));
+  const visible = inWeek.filter(e => !BACKGROUND_KINDS.includes(e.type));
+  const raids = visible.filter(e => e.type === "raid-battles");
+  const normal = visible.filter(e => e.type !== "raid-battles");
+  const multi = normal.filter(isMulti).sort((a, b) => dt(a.end) - dt(b.end));
+  const single = normal.filter(e => !isMulti(e));
+  const isThisWeek = +ws === +thisMonday();
+
+  const perDay = days.map(d => [
+    ...single.filter(e => sameDay(dt(e.start), d)).map(e => ({ e, mode: "day" })),
+    ...raids.filter(e => sameDay(dt(e.start), d)).map(e => ({ e, mode: "raid" })),
+  ].sort((a, b) => dt(a.e.start) - dt(b.e.start)));
+
+  let html = `<div class="range">${fmtMD(ws)} – ${fmtMD(addDays(ws, 6))}${isThisWeek ? "" : `<button id="today">Back to this week</button>`}</div>
+  <div class="weekbar">
+    <button class="navbtn" id="prev" aria-label="Previous week">‹</button>
+    <div class="strip">${days.map((d, i) => {
+      const cls = ["dayhead", sameDay(d, now) ? "today" : "", d < startOfDay(now) ? "past" : "", perDay[i].length ? "has" : ""].join(" ");
+      return `<button class="${cls}" data-day="${i}" aria-label="${fmtDowLong(d)} ${fmtMD(d)}"><span class="dow">${fmtDow(d)}</span><span class="num">${d.getDate()}</span></button>`;
+    }).join("")}</div>
+    <button class="navbtn" id="next" aria-label="Next week" ${+ws >= +lastDataWeek ? "disabled" : ""}>›</button>
+  </div>`;
+
+  const pastCount = days.filter(d => d < startOfDay(now)).length;
+  days.forEach((d, i) => {
+    const today = sameDay(d, now);
+    const past = d < startOfDay(now);
+    if (past && !showPast) return;
+    html += `<section class="day${past ? " past" : ""}" id="day-${i}">
+      <h2 class="dayh">${today ? "Today" : fmtDowLong(d)} <span class="date">${today ? fmtDow(d) + " " : ""}${fmtMD(d)}</span></h2>
+      ${perDay[i].length ? `<div class="cards">${perDay[i].map(x => cardHtml(x.e, x.mode, now)).join("")}</div>` : `<div class="quiet">No special events.</div>`}
+    </section>`;
+  });
+  if (pastCount && !showPast) {
+    html += `<button class="linkbtn" id="showpast">Show earlier days (${fmtDow(days[0])}${pastCount > 1 ? "–" + fmtDow(days[pastCount - 1]) : ""})</button>`;
+  }
+
+  html += raidSectionHtml(ws, we, now);
+
+  if (multi.length) {
+    html += `<h2 class="sec">All week</h2><div class="cards">${multi.map(e => cardHtml(e, "week", now)).join("")}</div>`;
+  }
+
+  const bg = inWeek.filter(e => BACKGROUND_KINDS.includes(e.type));
+  if (bg.length) {
+    html += `<div class="also"><div class="tierlabel" style="margin:0 0 4px">Also running</div>${bg.map(e =>
+      `<div><a href="${esc(e.link)}" target="_blank" rel="noopener">${esc(e.name)}</a> · until ${fmtMD(dt(e.end))}</div>`).join("")}</div>`;
+  }
+
+  const el = document.getElementById("view-week");
+  el.innerHTML = html;
+  window.dispatchEvent(new Event("pogo:render"));  // lets the website's social layer fill .social slots
+  el.querySelector("#prev").onclick = () => { weekStart = addDays(weekStart, -7); showPast = false; renderWeek(); };
+  el.querySelector("#next").onclick = () => { weekStart = addDays(weekStart, 7); showPast = false; renderWeek(); };
+  const t = el.querySelector("#today"); if (t) t.onclick = () => { weekStart = thisMonday(); showPast = false; renderWeek(); };
+  const sp = el.querySelector("#showpast"); if (sp) sp.onclick = () => { showPast = true; renderWeek(); };
+  el.querySelectorAll(".dayhead").forEach(b => b.addEventListener("click", () => {
+    if (!document.getElementById("day-" + b.dataset.day)) { showPast = true; renderWeek(); }
+    document.getElementById("day-" + b.dataset.day)
+      .scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  }));
+}
+
+// ---------- raid bosses
+function bossHtml(b, showWindow) {
+  const weak = weaknesses(b.types);
+  const dbl = weak.filter(w => w[1] > 2), sgl = weak.filter(w => w[1] <= 2);
+  const wx = b.weather && b.weather.length ? b.weather : boostWeather(b.types);
+  const s = dt(b.start), en = dt(b.end);
+  return `<article class="boss">
+    <div>${b.icon ? `<img class="pic" src="${b.icon}" alt="">` : ""}</div>
+    <div class="bbody">
+      <div class="kind">${esc(b.tier)}${b.shiny ? ` · <span class="shiny">✦ shiny</span>` : ""}</div>
+      <div class="name">${esc(b.name)}</div>
+      <div class="types">${b.types.map(t => chip(t)).join("")}</div>
+      ${showWindow && s && en ? `<div class="window">${fmtDow(s)} ${fmtMD(s)} → ${fmtDow(en)} ${fmtMD(en)}</div>` : ""}
+      ${b.cp20 ? `<div class="stats"><span>100% <b>${b.cp20}</b></span><span>Boosted <b>${b.cp25}</b></span>${wx.length ? `<span class="wx">${wxIcons(wx)}</span>` : ""}</div>` : ""}
+      <div class="weak">
+        ${dbl.length ? `<div class="weak-row dbl"><b>2× weak</b>${dbl.map(w => chip(w[0])).join("")}</div>` : ""}
+        ${sgl.length ? `<div class="weak-row"><b>weak</b>${sgl.map(w => chip(w[0])).join("")}</div>` : ""}
+      </div>
+    </div>
+  </article>`;
+}
+function bossesInWindow(a, b, now) {
+  return BOSSES.filter(x => {
+    if (x.start && x.end) return dt(x.start) < b && dt(x.end) > a;
+    return x.current && now >= a && now < b;
+  });
+}
+const TIER_ORDER = ["5-Star", "Mega", "3-Star", "1-Star"];
+const tierRank = t => { const i = TIER_ORDER.findIndex(o => t.includes(o)); return i < 0 ? 9 : i; };
+
+function raidSectionHtml(ws, we, now) {
+  const list = bossesInWindow(ws, we, now).filter(b => tierRank(b.tier) <= 1)
+    .sort((a, b) => tierRank(a.tier) - tierRank(b.tier) || dt(a.start || 0) - dt(b.start || 0));
+  if (!list.length) return "";
+  // group by how the boss sits in this week: new this week, all week, leaving early
+  const starts = b => b.start && dt(b.start) > ws;
+  const leaves = b => b.end && dt(b.end) < we && !starts(b);
+  const groups = [
+    ["New this week", list.filter(starts)],
+    ["All week", list.filter(b => !starts(b) && !leaves(b))],
+    ["Leaving soon", list.filter(leaves)],
+  ].filter(g => g[1].length);
+  return `<h2 class="sec">Raid bosses this week</h2><p class="sec-sub">5-star, Shadow 5-star and Mega. All tiers are on the Raids tab.</p>` +
+    groups.map(([label, bs]) => `<div class="tierlabel">${label}</div>
+      <div class="bosses${label === "Leaving soon" ? " leaving" : ""}">${bs.map(b => bossHtml(b, true)).join("")}</div>`).join("");
+}
+function renderRaids() {
+  const now = new Date();
+  const current = BOSSES.filter(b => b.current);
+  const upcoming = BOSSES.filter(b => !b.current && dt(b.end) > now).sort((a, b) => dt(a.start) - dt(b.start));
+  const tierOf = b => (b.name.startsWith("Shadow") ? "Shadow " : "") + b.tier;
+  const tiers = [...new Set(current.map(tierOf))].sort((a, b) => tierRank(a) - tierRank(b) || a.localeCompare(b));
+  let html = `<h2 class="sec">In raids now</h2>`;
+  for (const t of tiers) {
+    html += `<div class="tierlabel">${esc(t)}</div><div class="bosses">${current.filter(b => tierOf(b) === t).map(b => bossHtml(b, false)).join("")}</div>`;
+  }
+  if (upcoming.length) html += `<h2 class="sec">Coming up</h2><div class="bosses">${upcoming.map(b => bossHtml(b, true)).join("")}</div>`;
+  document.getElementById("view-raids").innerHTML = html;
+}
+
+// ---------- tabs & boot
+function setTab(which) {
+  for (const t of ["week", "raids"]) {
+    document.getElementById("tab-" + t).setAttribute("aria-selected", String(t === which));
+    document.getElementById("view-" + t).hidden = t !== which;
+  }
+  store.set("pogo.tab", which);
+}
+document.getElementById("tab-week").onclick = () => setTab("week");
+document.getElementById("tab-raids").onclick = () => setTab("raids");
+document.getElementById("foot").innerHTML =
+  `Data updated ${fmtMD(new Date(DATA.built))} from <a href="https://leekduck.com/events/" target="_blank" rel="noopener">LeekDuck</a> via ` +
+  `<a href="https://github.com/bigfoott/ScrapedDuck" target="_blank" rel="noopener">ScrapedDuck</a> (event images © Niantic / The Pokémon Company); base stats from pogoapi.net. ` +
+  `Times are local. 100% = hundo CP at level 20 (raid, research, egg and Max Battle catches); Boosted = weather boosted (level 25); icons show the boosting weather. ` +
+  `×2 = double weakness.`;
+
+renderWeek();
+renderRaids();
+setTab(location.hash === "#raids" ? "raids" : store.get("pogo.tab", "week"));
+// refresh countdowns, but never while someone is typing in a form
+setInterval(() => { if (!document.hidden && !document.activeElement?.closest("form")) renderWeek(); }, 60000);
+</script>
