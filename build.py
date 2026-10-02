@@ -173,16 +173,17 @@ def hub_slug(name, pid):
 _counter_cache = {}
 
 
-def hub_counters(name, pid, keep=6):
-    """Top raid counters, in Pokémon GO Hub's own ranking order."""
+def hub_counters(name, pid, keep=6, slug=None, page="counters"):
+    """Top counters, in Pokémon GO Hub's own ranking order (page="counters-max-battles" for Max Battles)."""
     if not pid:
         return []
-    slug = hub_slug(name, pid)
-    if slug in _counter_cache:
-        return _counter_cache[slug]
+    slug = slug or hub_slug(name, pid)
+    key = slug + "/" + page
+    if key in _counter_cache:
+        return _counter_cache[key]
     out = []
     try:
-        req = urllib.request.Request(f"{HUB}/pokemon/{slug}/counters", headers={"User-Agent": "Mozilla/5.0 pogo-squad-build"})
+        req = urllib.request.Request(f"{HUB}/pokemon/{slug}/{page}", headers={"User-Agent": "Mozilla/5.0 pogo-squad-build"})
         with urlopen(req, timeout=45) as r:
             t = r.read().decode("utf-8", "replace")
         for _, row in re.findall(r"<tr><td>(\d+)\.</td>(.*?)</tr>", t, re.S):
@@ -199,8 +200,11 @@ def hub_counters(name, pid, keep=6):
                 break
     except Exception as e:
         print("  counters failed:", slug, e)
-    _counter_cache[slug] = out
+    _counter_cache[key] = out
     return out
+
+
+ICS_LOCATION = "The Shoppes at Chino Hills, 13920 City Center Dr, Chino Hills, CA 91709"
 
 
 def ics_text(events):
@@ -222,7 +226,7 @@ def ics_text(events):
         desc += e.get("remote", []) + e["bonuses"][:3] + [e["link"]]
         lines += ["BEGIN:VEVENT", f"UID:{e['id']}@pogo-squad", f"DTSTAMP:{now}",
                   f"DTSTART:{stamp(e['start'])}", f"DTEND:{stamp(e['end'])}",
-                  f"SUMMARY:{esc(e['name'])}", f"DESCRIPTION:{esc(chr(10).join(d for d in desc if d))}",
+                  f"SUMMARY:{esc(e['name'])}", f"LOCATION:{esc(ICS_LOCATION)}", f"DESCRIPTION:{esc(chr(10).join(d for d in desc if d))}",
                   f"URL:{e['link']}", "END:VEVENT"]
     lines.append("END:VCALENDAR")
     folded = []
@@ -445,6 +449,11 @@ def main():
             m["types"] = ty or []
             m["cp20"] = hundo(st, 20) if st else None
             m["cp25"] = hundo(st, 25) if st else None
+            # Max Battle Day bosses: Hub's Max Battle counters (Gigantamax / Dynamax form)
+            if e["eventType"] == "max-battles" and st:
+                form = "Gigantamax" if "Gigantamax" in e["name"] else "Dynamax"
+                m["counters"] = hub_counters(m["name"], st["pokemon_id"], slug=f"{st['pokemon_id']}-{form}",
+                                             page="counters-max-battles")
         extras = {"bonuses": [], "newShiny": [], "evolve": None}
         if e["eventType"] not in ("go-battle-league", "go-pass", "season", "raid-battles", "twitch-drops"):
             extras = page_extras(e["link"])

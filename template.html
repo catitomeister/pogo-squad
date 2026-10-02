@@ -146,11 +146,6 @@ header.top {
 .ctrc span { display: block; font-size: 0.72rem; color: var(--muted); line-height: 1.25; }
 .ctrsrc { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
 .ctrsrc a { color: var(--muted); }
-.todo { margin-top: 4px; background: var(--chip); border-radius: 12px; padding: 6px 10px; }
-.todo summary { cursor: pointer; font-weight: 700; font-size: 0.9rem; }
-.todo label { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 6px; align-items: start; font-size: 0.92rem; padding: 4px 0; cursor: pointer; }
-.todo input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--live); }
-.todo input:checked + span { text-decoration: line-through; color: var(--muted); }
 .rtasks { display: grid; gap: 6px; }
 .rtask { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; display: grid; gap: 4px; }
 .rtext { font-weight: 700; font-size: 0.98rem; }
@@ -298,48 +293,8 @@ function shortEvolve(s) {
 }
 const shortBonus = b => b.length > 70 ? b.slice(0, 68).replace(/\s+\S*$/, "") + "…" : b;
 
-// ---------- personal to-do checklist (built from the event's facts; ticks stay on this device)
-function checklistItems(e) {
-  const items = [];
-  const end = dt(e.end);
-  if (e.evolve) {
-    const m = e.evolve.match(/Evolve (.+?) during .*?(\w+) hours? afterwards? to get an? (.+?) that knows the (?:Fast|Charged) Attacks? (.+)$/i);
-    const hrs = m ? ({ one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 }[m[2].toLowerCase()] || parseInt(m[2]) || 0) : 0;
-    items.push(m ? `Evolve ${m[1]} → ${m[3]} (${m[4]}) by ${fmtTime(new Date(+end + hrs * 3600e3))}` : e.evolve);
-  }
-  if (e.type === "community-day") items.push("Pop a Lucky Egg + Star Piece");
-  (e.remote || []).forEach(r => items.push(r));
-  for (const b of e.bonuses || []) {
-    if (/trade|stardust/i.test(b) && /trade/i.test(b)) items.push(shortBonus(b.replace(/\*$/, "")));
-    else if (/Max Particle collection limit/i.test(b)) {
-      const n = (b.match(/to ([\d,]+)/) || [])[1];
-      items.push(n ? `Collect up to ${n} Max Particles` : shortBonus(b));
-    }
-  }
-  if (e.type === "max-battles") items.push("Save up Max Particles the day before");
-  if (e.type === "raid-hour" || e.type === "raid-day") items.push("Bring Raid Passes / Remote Raid Passes");
-  return items.slice(0, 5);
-}
-function checklistHtml(e) {
-  const items = checklistItems(e);
-  if (!items.length) return "";
-  const key = "pogo.todo." + e.id;
-  let done = [];
-  try { done = JSON.parse(localStorage.getItem(key) || "[]"); } catch {}
-  const n = items.filter((_, i) => done.includes(i)).length;
-  return `<details class="todo" data-key="${esc(key)}"${n && n < items.length ? " open" : ""}>
-    <summary>My checklist · ${n}/${items.length}</summary>
-    ${items.map((t, i) => `<label><input type="checkbox" data-i="${i}"${done.includes(i) ? " checked" : ""}> <span>${esc(t)}</span></label>`).join("")}
-  </details>`;
-}
-document.addEventListener("change", ev => {
-  const box = ev.target.closest(".todo input[type=checkbox]");
-  if (!box) return;
-  const d = box.closest(".todo");
-  const done = [...d.querySelectorAll("input:checked")].map(x => +x.dataset.i);
-  try { localStorage.setItem(d.dataset.key, JSON.stringify(done)); } catch {}
-  d.querySelector("summary").textContent = `My checklist · ${done.length}/${d.querySelectorAll("input").length}`;
-});
+const KEY_BONUS = /stardust|trade|candy|\bxp\b|\bxl\b|hatch|incense|lure|shiny|egg|raid pass|catch/i;
+const isKeyBonus = b => KEY_BONUS.test(b) && !/max particle|power spot/i.test(b);
 
 // mode: "day" (single-day event), "week" (multi-day event), "raid" (raid rotation)
 function cardHtml(e, mode, now) {
@@ -368,9 +323,11 @@ function cardHtml(e, mode, now) {
   (e.remote || []).forEach(r => facts.push(`<li class="rr">${esc(r)}</li>`));
   if (e.evolve) facts.push(`<li class="evo">${esc(shortEvolve(e.evolve))}</li>`);
   if (e.newShiny && e.newShiny.length) facts.push(`<li class="sh"><strong>New shiny:</strong> ${e.newShiny.map(esc).join(", ")}</li>`);
+  // only the bonuses players plan around (dust, trades, candy, XP...); the rest is one click away
   const bonuses = e.bonuses || [];
-  bonuses.slice(0, 3).forEach(b => facts.push(`<li>${esc(shortBonus(b))}</li>`));
-  if (bonuses.length > 3) facts.push(`<li>+${bonuses.length - 3} more bonuses on the event page</li>`);
+  const key = bonuses.filter(isKeyBonus).slice(0, 4);
+  key.forEach(b => facts.push(`<li>${esc(shortBonus(b.replace(/\*$/, "")))}</li>`));
+  if (bonuses.length > key.length) facts.push(`<li class="more">+${bonuses.length - key.length} more bonuses on the event page</li>`);
 
   return `<article class="ev${live && mode === "day" ? " live" : ""}">
     <a class="thumb" href="${esc(e.link)}" target="_blank" rel="noopener" aria-label="Open event page">${e.image ? `<img src="${e.image}" alt="" loading="lazy">` : ""}</a>
@@ -381,7 +338,7 @@ function cardHtml(e, mode, now) {
       ${e.mons && e.mons.length ? `<div class="mons">${e.mons.map(m => monHtml(m, battle)).join("")}</div>` : ""}
       ${facts.length ? `<ul class="facts">${facts.join("")}</ul>` : ""}
       ${["raid-hour", "raid-day", "raid-battles"].includes(e.type) ? (e.mons || []).map(m => countersHtml(bossCounters(m.name))).join("") : ""}
-      ${mode !== "raid" && dt(e.end) > now ? checklistHtml(e) : ""}
+      ${e.type === "max-battles" ? maxCountersHtml(e.mons || []) : ""}
       ${mode === "raid" ? "" : `<div class="social" data-ev="${esc(e.id)}"></div>`}
     </div>
   </article>`;
@@ -478,9 +435,20 @@ function bossHtml(b, showWindow) {
   </article>`;
 }
 // Top 6 raid counters from Pokémon GO Hub, collapsed by default
-function countersHtml(list) {
+// Max Battle Days with several bosses (e.g. the Lake trio) often share one counter list: show it once
+function maxCountersHtml(mons) {
+  const groups = new Map();
+  for (const m of mons) {
+    if (!m.counters || !m.counters.length) continue;
+    const k = m.counters.map(c => c.name).join("|");
+    if (!groups.has(k)) groups.set(k, { list: m.counters, names: [] });
+    groups.get(k).names.push(m.name);
+  }
+  return [...groups.values()].map(g => countersHtml(g.list, mons.length > 1 ? g.names.join(", ") : "")).join("");
+}
+function countersHtml(list, who = "") {
   if (!list || !list.length) return "";
-  return `<details class="ctr"><summary>Top counters</summary><div class="ctrgrid">${list.map(c => `<div class="ctrc">
+  return `<details class="ctr"><summary>Top counters${who ? ` · ${esc(who)}` : ""}</summary><div class="ctrgrid">${list.map(c => `<div class="ctrc">
       ${c.icon ? `<img src="${c.icon}" alt="" loading="lazy">` : ""}<div><b>${esc(c.name)}</b><span>${esc(c.fast)} · ${esc(c.charged)}</span></div>
     </div>`).join("")}</div><div class="ctrsrc">Ranking: <a href="https://db.pokemongohub.net/" target="_blank" rel="noopener">Pokémon GO Hub</a></div></details>`;
 }
@@ -523,29 +491,21 @@ function renderRaids() {
   const tiers = [...new Set(current.map(tierOf))].sort((a, b) => tierRank(a) - tierRank(b) || a.localeCompare(b));
   let html = `<h2 class="sec">In raids now</h2>`;
   for (const t of tiers) {
-    html += `<div class="tierlabel">${esc(t)}</div><div class="bosses">${current.filter(b => tierOf(b) === t).map(b => bossHtml(b, false)).join("")}</div>`;
+    html += `<div class="tierlabel">${esc(t)}</div><div class="bosses">${current.filter(b => tierOf(b) === t).map(b => bossHtml(b, true)).join("")}</div>`;
   }
   if (upcoming.length) html += `<h2 class="sec">Coming up</h2><div class="bosses">${upcoming.map(b => bossHtml(b, true)).join("")}</div>`;
   document.getElementById("view-raids").innerHTML = html;
 }
 
 // ---------- field research
-const RESEARCH_GROUPS = [
-  ["throw", "Throwing"], ["catch", "Catching"], ["battle", "Battle"], ["explore", "Exploring"],
-  ["training", "Training"], ["buddy", "Buddy and trading"], ["rocket", "Team GO Rocket"], ["event", "Event tasks"],
-];
 function renderResearch() {
-  const list = DATA.research || [];
-  let html = `<h2 class="sec">Current field research</h2><p class="sec-sub">Tasks from spinning PokéStops right now. Encounters show their max CP (100%).</p>`;
-  for (const [type, label] of RESEARCH_GROUPS) {
-    const tasks = list.filter(r => r.type === type);
-    if (!tasks.length) continue;
-    html += `<div class="tierlabel">${label}</div><div class="rtasks">${tasks.map(r => `<div class="rtask">
+  // only event-specific field research (the regular task pool isn't worth the space)
+  const tasks = (DATA.research || []).filter(r => r.type === "event");
+  let html = `<h2 class="sec">Event research</h2><p class="sec-sub">Event field research from PokéStops right now. Encounters show their max CP (100%).</p>`;
+  html += tasks.length ? `<div class="rtasks">${tasks.map(r => `<div class="rtask">
       <div class="rtext">${esc(r.task)}</div>
-      <div class="rrew">${r.rewards.map(w => `<span class="rmon" title="${esc(w.name)}${w.cp ? " · 100% " + w.cp : ""}">${w.icon ? `<img src="${w.icon}" alt="">` : ""}<span>${esc(w.name)}${w.shiny ? " ✦" : ""}</span></span>`).join("")}</div>
-    </div>`).join("")}</div>`;
-  }
-  if (!list.length) html += `<p class="quiet">No field research data right now.</p>`;
+      <div class="rrew">${r.rewards.map(w => `<span class="rmon" title="${esc(w.name)}${w.cp ? " · 100% " + w.cp : ""}">${w.icon ? `<img src="${w.icon}" alt="">` : ""}<span>${esc(w.name)}${w.shiny ? " ✦" : ""}${w.cp ? ` <small>${w.cp}</small>` : ""}</span></span>`).join("")}</div>
+    </div>`).join("")}</div>` : `<p class="quiet">No event research right now.</p>`;
   document.getElementById("view-research").innerHTML = html;
 }
 

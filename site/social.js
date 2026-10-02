@@ -109,65 +109,16 @@ async function moveName(from, to) {
 }
 const needName = fn => (me ? fn() : askName(fn));
 
-// ---------- shiny wishlist (stored as rsvps with eventId "wish__<Pokémon>", so the existing rules cover it)
+// Wishlist entries (rsvps with eventId "wish__<Pokémon>") came from a removed feature; keep them out of "going".
 const WISH = "wish__";
 const wishes = new Map();  // Pokémon name -> [people]
-const allMons = [...new Set([
-  ...(window.DATA_EVENTS || []).flatMap(e => (e.mons || []).map(m => m.name)),
-  ...((window.DATA_ALL || {}).bosses || []).map(b => b.name.replace(/^(Shadow|Mega) /, "")),
-  ...((window.DATA_ALL || {}).research || []).flatMap(r => r.rewards.filter(w => w.cp).map(w => w.name)),
-])].sort();
-const wishBtn = document.createElement("button");
-wishBtn.className = "mechip wishchip";
-wishBtn.textContent = "✦ Wishlist";
-wishBtn.title = "Your shiny wishlist";
-header.insertBefore(wishBtn, chip);
-const wdlg = document.createElement("dialog");
-wdlg.className = "namedlg";
-document.body.appendChild(wdlg);
-function myWishes() { return [...wishes].filter(([, ns]) => ns.includes(me)).map(([m]) => m).sort(); }
-function paintWishDlg() {
-  const mine = myWishes();
-  wdlg.innerHTML = `<form id="wishform">
-    <h3>Shiny wishlist</h3>
-    <p>Friends see “wanted by ${esc(me)}” on events where these show up.</p>
-    <div class="wishes">${mine.length ? mine.map(m => `<button type="button" class="wish" data-wish="${esc(m)}" aria-label="Remove ${esc(m)}">${esc(m)} ✕</button>`).join("") : `<span class="soc-note">Nothing yet.</span>`}</div>
-    <div class="wishadd"><input id="wishin" list="monlist" maxlength="40" placeholder="Add a Pokémon, e.g. Zorua"><button type="submit" class="primary">Add</button></div>
-    <datalist id="monlist">${allMons.map(m => `<option value="${esc(m)}">`).join("")}</datalist>
-    <div class="dlgbtns"><button type="button" id="wishdone">Done</button></div>
-  </form>`;
-}
-wishBtn.onclick = () => needName(() => { paintWishDlg(); wdlg.showModal(); });
-wdlg.addEventListener("click", async ev => {
-  if (ev.target.id === "wishdone") return wdlg.close();
-  const w = ev.target.closest("[data-wish]");
-  if (w) { await deleteDoc(doc(db, "rsvps", rsvpId(WISH + w.dataset.wish, me))).catch(report); }
-});
-wdlg.addEventListener("submit", async ev => {
-  ev.preventDefault();
-  const v = wdlg.querySelector("#wishin").value.trim().slice(0, 40);
-  if (!v) return;
-  const name = allMons.find(m => m.toLowerCase() === v.toLowerCase()) || v;
-  await setDoc(doc(db, "rsvps", rsvpId(WISH + name, me)), { eventId: WISH + name, name: me, ts: serverTimestamp() }).catch(report);
-});
-function wantedHtml(id) {
-  const e = (window.DATA_EVENTS || []).find(x => x.id === id);
-  if (!e) return "";
-  const lines = (e.mons || []).map(m => {
-    const base = m.name.replace(/^(Shadow|Mega) /, "");
-    const ns = wishes.get(m.name) || wishes.get(base) || [];
-    return ns.length ? `<div class="wanted">✦ Shiny ${esc(base)} wanted by ${ns.map(n => n === me ? "<b>you</b>" : esc(n)).join(", ")}</div>` : "";
-  });
-  return lines.join("");
-}
-
 // ---------- calendar: one event as an .ics file, or subscribe to the whole feed
 function icsFor(e) {
   const f = s => s.slice(0, 19).replace(/[-:]/g, "") + (s.endsWith("Z") ? "Z" : "");
   const t = s => s.replace(/[\\;,]/g, c => "\\" + c);
   return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//POGO Squad//EN", "BEGIN:VEVENT",
     `UID:${e.id}@pogo-squad`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").slice(0, 15)}Z`,
-    `DTSTART:${f(e.start)}`, `DTEND:${f(e.end)}`, `SUMMARY:${t(e.name)}`, `URL:${e.link}`,
+    `DTSTART:${f(e.start)}`, `DTEND:${f(e.end)}`, `SUMMARY:${t(e.name)}`, `LOCATION:${t("The Shoppes at Chino Hills, 13920 City Center Dr, Chino Hills, CA 91709")}`, `URL:${e.link}`,
     "END:VEVENT", "END:VCALENDAR"].join("\r\n");
 }
 document.addEventListener("click", ev => {
@@ -211,7 +162,7 @@ function shareText(id) {
   if (names.length) lines.push(`Going: ${names.join(", ")}`);
   for (const m of meetups.filter(x => x.eventId === id)) {
     const n = (m.plus || []).length;
-    lines.push(`📍 Meetup: ${m.when}${m.place ? " @ " + m.place : ""} (${m.by}${n ? " +" + n : ""})`);
+    lines.push(`🍜 ${m.when}${m.place ? " · " + m.place : ""} (${m.by}${n ? " +" + n : ""})`);
   }
   lines.push("", `Who's in? 👉 ${location.origin}${location.pathname}`);
   return lines.join("\n");
@@ -232,12 +183,11 @@ function socialHtml(id) {
     <span class="acts"><a class="calbtn" href="#" data-cal="${esc(id)}" aria-label="Add to calendar" title="Add to calendar">📅</a>
     <a class="wabtn" href="${esc(waLink(id))}" target="_blank" rel="noopener" aria-label="Share to WhatsApp">Share</a></span>
   </div>`;
-  h = wantedHtml(id) + h;
   for (const m of ms) {
     const people = [m.by, ...(m.plus || []).filter(n => n !== m.by)];
     const joined = people.includes(me);
     h += `<div class="meet">
-      <div class="mwhat">📍 <b>${esc(m.when)}</b>${m.place ? ` · ${esc(m.place)}` : ""}</div>
+      <div class="mwhat">🍜 <b>${esc(m.when)}</b>${m.place ? ` · ${esc(m.place)}` : ""}</div>
       <div class="mmeta">👥 ${people.length} · ${people.map(n => n === me ? `<b>${esc(n)}</b>` : esc(n)).join(", ")}</div>
       <div class="mbtns">
         ${m.by === me ? `<button data-act="del" data-id="${esc(m.id)}">Remove</button>`
@@ -247,13 +197,16 @@ function socialHtml(id) {
   }
   if (openForm === id) {
     const d = drafts[id] || {};
+    const phase = d.phase || "After";
     h += `<form class="meetform" data-ev="${esc(id)}">
-      <input name="when" maxlength="40" placeholder="When, e.g. Sat 2pm" value="${esc(d.when || "")}" required>
-      <input name="place" maxlength="60" placeholder="Where, e.g. Library Waterfall Wall" value="${esc(d.place || "")}">
+      <div class="phase" role="radiogroup" aria-label="Before or after the event">${["Before", "After"].map(p =>
+        `<label><input type="radio" name="phase" value="${p}"${p === phase ? " checked" : ""}><span>${p} the event</span></label>`).join("")}</div>
+      <input name="place" maxlength="60" placeholder="Where to eat, e.g. Dago Shave Ice" value="${esc(d.place || "")}" required>
+      <input name="when" maxlength="28" placeholder="Time (optional), e.g. 5:30pm" value="${esc(d.when || "")}">
       <div class="dlgbtns"><button type="button" data-act="cancelform" data-ev="${esc(id)}">Cancel</button><button type="submit" class="primary">Post</button></div>
     </form>`;
   } else {
-    h += `<button class="linkish" data-act="openform" data-ev="${esc(id)}">+ Suggest a meetup</button>`;
+    h += `<button class="linkish" data-act="openform" data-ev="${esc(id)}">🍜 Food before / after?</button>`;
   }
   return h;
 }
@@ -279,7 +232,7 @@ document.addEventListener("click", ev => {
       else await setDoc(ref, { eventId: id, name: me, ts: serverTimestamp() });
     } catch (e) { report(e); }
   });
-  if (act === "openform") needName(() => { openForm = id; fill(); document.querySelector(`.meetform[data-ev="${CSS.escape(id)}"] input`)?.focus(); });
+  if (act === "openform") needName(() => { openForm = id; fill(); document.querySelector(`.meetform[data-ev="${CSS.escape(id)}"] input[name=place]`)?.focus(); });
   if (act === "cancelform") { openForm = null; fill(); }
   if (act === "retry") location.reload();
   if (act === "plus") needName(async () => {
@@ -287,23 +240,20 @@ document.addEventListener("click", ev => {
     const joining = !(m.plus || []).includes(me);
     try {
       await updateDoc(doc(db, "meetups", mid), { plus: joining ? arrayUnion(me) : arrayRemove(me) });
-      // joining a meetup also marks you as going to the event
-      if (joining && !(going.get(m.eventId) || []).includes(me)) {
-        await setDoc(doc(db, "rsvps", rsvpId(m.eventId, me)), { eventId: m.eventId, name: me, ts: serverTimestamp() });
-      }
     } catch (e) { report(e); }
   });
   if (act === "del") deleteDoc(doc(db, "meetups", mid)).catch(report);
 });
 document.addEventListener("input", ev => {
   const f = ev.target.closest(".meetform"); if (!f) return;
-  drafts[f.dataset.ev] = { when: f.when.value, place: f.place.value };
+  drafts[f.dataset.ev] = { when: f.when.value, place: f.place.value, phase: f.phase.value };
 });
 document.addEventListener("submit", async ev => {
   const f = ev.target.closest(".meetform"); if (!f) return;
   ev.preventDefault();
-  const when = f.when.value.trim(), place = f.place.value.trim();
-  if (!when) return;
+  const time = f.when.value.trim(), place = f.place.value.trim();
+  if (!place) return;
+  const when = (f.phase.value || "After") + (time ? " · " + time : "");
   const id = f.dataset.ev;
   try {
     await addDoc(collection(db, "meetups"), { eventId: id, when, place, by: me, plus: [], ts: serverTimestamp() });
@@ -336,7 +286,6 @@ onAuthStateChanged(auth, user => {
     });
     for (const v of [...going.values(), ...wishes.values()]) v.sort((a, b) => a.localeCompare(b));
     ready = true; fill();
-    if (wdlg.open) paintWishDlg();
     if (meetupsLoaded) tidyNames();
   }, e => fail("rsvps", e));
   onSnapshot(collection(db, "meetups"), snap => {
