@@ -227,7 +227,7 @@ def ics_text(events):
         lines += ["BEGIN:VEVENT", f"UID:{e['id']}@pogo-squad", f"DTSTAMP:{now}",
                   f"DTSTART:{stamp(e['start'])}", f"DTEND:{stamp(e['end'])}",
                   f"SUMMARY:{esc(e['name'])}", f"LOCATION:{esc(ICS_LOCATION)}", f"DESCRIPTION:{esc(chr(10).join(d for d in desc if d))}",
-                  f"URL:{e['link']}", "END:VEVENT"]
+                  "END:VEVENT"]  # no URL field: iOS shows it under Location; the link is in DESCRIPTION
     lines.append("END:VCALENDAR")
     folded = []
     for ln in lines:  # RFC 5545 line folding at 75 octets
