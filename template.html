@@ -84,6 +84,7 @@ header.top {
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 8px; align-items: start; }
 .ev { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
 .ev.live { border-color: var(--live); box-shadow: 0 0 0 1.5px var(--live); }
+.ev.over { opacity: 0.55; }
 .thumb { position: relative; background: var(--chip); aspect-ratio: 3 / 1; display: block; }
 .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .evbody { padding: 10px 14px 14px; display: grid; gap: 6px; align-content: start; min-width: 0; }
@@ -333,7 +334,8 @@ function cardHtml(e, mode, now) {
   key.forEach(b => facts.push(`<li>${esc(shortBonus(b.replace(/\*$/, "")))}</li>`));
   if (bonuses.length > key.length) facts.push(`<li class="more">+${bonuses.length - key.length} more bonuses on the event page</li>`);
 
-  return `<article class="ev${live && mode === "day" ? " live" : ""}">
+  const over = mode === "day" && en <= now;
+  return `<article class="ev${live && mode === "day" ? " live" : ""}${over ? " over" : ""}">
     <a class="thumb" href="${esc(e.link)}" target="_blank" rel="noopener" aria-label="Open event page">${e.image ? `<img src="${e.image}" alt="" loading="lazy">` : ""}</a>
     <div class="evbody">
       <div class="evtop"><span class="when">${when}</span>${state}</div>
@@ -361,10 +363,13 @@ function renderWeek() {
   const single = normal.filter(e => !isMulti(e));
   const isThisWeek = +ws === +thisMonday();
 
+  // Within a day: live or upcoming events first (by start time), then new-raid-boss rotations
+  // (those bosses are also listed further down), then events that already ended.
+  const rank = x => (x.mode === "raid" ? 1 : dt(x.e.end) <= now ? 2 : 0);
   const perDay = days.map(d => [
     ...single.filter(e => sameDay(dt(e.start), d)).map(e => ({ e, mode: "day" })),
     ...raids.filter(e => sameDay(dt(e.start), d)).map(e => ({ e, mode: "raid" })),
-  ].sort((a, b) => dt(a.e.start) - dt(b.e.start)));
+  ].sort((a, b) => rank(a) - rank(b) || dt(a.e.start) - dt(b.e.start)));
 
   let html = `<div class="range">${fmtMD(ws)} – ${fmtMD(addDays(ws, 6))}${isThisWeek ? "" : `<button id="today">Back to this week</button>`}</div>
   <div class="weekbar">
