@@ -174,15 +174,17 @@ function shareText(id) {
 const waLink = id => "https://wa.me/?text=" + encodeURIComponent(shareText(id));
 
 // ---------- render into every .social slot
-// noFood: long-running events (more than 3 days) have no meetups, so no "Food before / after?" option
+// noFood: long-running events (more than 3 days) have no meetups and nobody "goes" to them:
+// no "I'm going", calendar, Share or "Food before / after?" (existing food plans, if any, still show)
 function socialHtml(id, noFood = false) {
+  if (noFood && !meetups.some(m => m.eventId === id)) return "";
   if (failed) return `<div class="soc-note">Can't load who's going right now${failCode ? ` (${esc(failCode)})` : ""}.
     <button class="linkish" data-act="retry">Retry</button></div>`;
   if (!ready) return `<div class="soc-note">Loading…</div>`;
   const names = going.get(id) || [];
   const mine = names.includes(me);
   const ms = meetups.filter(m => m.eventId === id).sort((a, b) => (b.plus?.length || 0) - (a.plus?.length || 0));
-  let h = `<div class="goingrow">
+  let h = noFood ? "" : `<div class="goingrow">
     <button class="gobtn${mine ? " on" : ""}" data-act="go" data-ev="${esc(id)}" aria-pressed="${mine}">${mine ? "✓ Going" : "I'm going"}</button>
     <span class="who">${names.length ? names.map(n => n === me ? `<b>${esc(n)}</b>` : esc(n)).join(", ") : "No one yet"}</span>
     <span class="acts"><a class="calbtn" href="#" data-cal="${esc(id)}" aria-label="Add to calendar" title="Add to calendar">📅</a>
