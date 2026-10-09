@@ -174,7 +174,8 @@ function shareText(id) {
 const waLink = id => "https://wa.me/?text=" + encodeURIComponent(shareText(id));
 
 // ---------- render into every .social slot
-function socialHtml(id) {
+// noFood: long-running events (more than 3 days) have no meetups, so no "Food before / after?" option
+function socialHtml(id, noFood = false) {
   if (failed) return `<div class="soc-note">Can't load who's going right now${failCode ? ` (${esc(failCode)})` : ""}.
     <button class="linkish" data-act="retry">Retry</button></div>`;
   if (!ready) return `<div class="soc-note">Loading…</div>`;
@@ -209,7 +210,7 @@ function socialHtml(id) {
       <input name="when" maxlength="28" placeholder="Time (optional), e.g. 5:30pm" value="${esc(d.when || "")}">
       <div class="dlgbtns"><button type="button" data-act="cancelform" data-ev="${esc(id)}">Cancel</button><button type="submit" class="primary">${editing ? "Save" : "Post"}</button></div>
     </form>`;
-  } else {
+  } else if (!noFood) {
     h += `<button class="linkish" data-act="openform" data-ev="${esc(id)}">🍜 Food before / after?</button>`;
   }
   return h;
@@ -217,7 +218,7 @@ function socialHtml(id) {
 function fill() {
   document.querySelectorAll(".social[data-ev]").forEach(el => {
     if (el.contains(document.activeElement) && document.activeElement.closest("form")) return; // don't wipe typing
-    el.innerHTML = socialHtml(el.dataset.ev);
+    el.innerHTML = socialHtml(el.dataset.ev, el.dataset.nofood === "1");
   });
 }
 window.addEventListener("pogo:render", fill);

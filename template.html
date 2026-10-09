@@ -85,6 +85,17 @@ header.top {
 .ev { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
 .ev.live { border-color: var(--live); box-shadow: 0 0 0 1.5px var(--live); }
 .ev.over { opacity: 0.55; }
+.runlist { margin-top: 12px; display: grid; gap: 6px; }
+.runhead { font: 700 0.72rem var(--f-body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.run { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.run summary { list-style: none; cursor: pointer; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.run summary::-webkit-details-marker { display: none; }
+.rtxt { display: grid; gap: 1px; min-width: 0; }
+.rname { font-size: 0.98rem; line-height: 1.25; }
+.rmeta { font-size: 0.82rem; color: var(--muted); }
+.rchev { color: var(--muted); flex: none; transition: transform 0.15s; }
+.run[open] .rchev { transform: rotate(180deg); }
+.run .ev { margin: 0 8px 8px; }
 .thumb { position: relative; background: var(--chip); aspect-ratio: 3 / 1; display: block; }
 .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .evbody { padding: 10px 14px 14px; display: grid; gap: 6px; align-content: start; min-width: 0; }
@@ -345,12 +356,25 @@ function cardHtml(e, mode, now) {
       ${facts.length ? `<ul class="facts">${facts.join("")}</ul>` : ""}
       ${["raid-hour", "raid-day", "raid-battles"].includes(e.type) ? (e.mons || []).map(m => countersHtml(bossCounters(m.name))).join("") : ""}
       ${e.type === "max-battles" ? maxCountersHtml(e.mons || []) : ""}
-      ${mode === "raid" ? "" : `<div class="social" data-ev="${esc(e.id)}"></div>`}
+      ${mode === "raid" ? "" : `<div class="social" data-ev="${esc(e.id)}"${en - s > 72 * 3600e3 ? ' data-nofood="1"' : ""}></div>`}
     </div>
   </article>`;
 }
 
 // ---------- week view
+// A running multi-day event as one compact row; tap to open its full card in place.
+function runningRowHtml(e, now) {
+  const en = dt(e.end);
+  const keyBonus = (e.bonuses || []).find(isKeyBonus);
+  const hint = e.newShiny && e.newShiny.length ? "✦ " + e.newShiny.slice(0, 2).join(", ")
+    : e.mons && e.mons.length ? e.mons.slice(0, 2).map(m => m.name).join(", ")
+    : keyBonus ? shortBonus(keyBonus.replace(/\*$/, "")) : "";
+  return `<details class="run"><summary>
+      <span class="rtxt"><b class="rname">${esc(e.name)}</b>
+      <span class="rmeta">until ${fmtDow(en)} ${fmtMD(en)}, ${fmtTime(en)}${hint ? " · " + esc(hint) : ""}</span></span>
+      <span class="rchev" aria-hidden="true">▾</span></summary>${cardHtml(e, "week", now)}</details>`;
+}
+
 function renderWeek() {
   const now = new Date();
   const ws = weekStart, we = addDays(ws, 7);
@@ -366,8 +390,15 @@ function renderWeek() {
   // Within a day: live or upcoming events first (by start time), then new-raid-boss rotations
   // (those bosses are also listed further down), then events that already ended.
   const rank = x => (x.mode === "raid" ? 1 : dt(x.e.end) <= now ? 2 : 0);
+  // Multi-day events: a full card on the day they start (today or later); ones already running
+  // before that are listed in compact rows under Today (or under Monday in other weeks).
+  const from = isThisWeek ? startOfDay(now) : ws;
+  const startsHere = e => dt(e.start) >= from && dt(e.start) < we;
+  const running = multi.filter(e => !startsHere(e) && dt(e.end) > (isThisWeek ? now : ws));
+  const anchor = isThisWeek ? days.findIndex(d => sameDay(d, now)) : 0;
   const perDay = days.map(d => [
     ...single.filter(e => sameDay(dt(e.start), d)).map(e => ({ e, mode: "day" })),
+    ...multi.filter(e => startsHere(e) && sameDay(dt(e.start), d)).map(e => ({ e, mode: "week" })),
     ...raids.filter(e => sameDay(dt(e.start), d)).map(e => ({ e, mode: "raid" })),
   ].sort((a, b) => rank(a) - rank(b) || dt(a.e.start) - dt(b.e.start)));
 
@@ -389,6 +420,7 @@ function renderWeek() {
     html += `<section class="day${past ? " past" : ""}" id="day-${i}">
       <h2 class="dayh">${today ? "Today" : fmtDowLong(d)} <span class="date">${today ? fmtDow(d) + " " : ""}${fmtMD(d)}</span></h2>
       ${perDay[i].length ? `<div class="cards">${perDay[i].map(x => cardHtml(x.e, x.mode, now)).join("")}</div>` : `<div class="quiet">No special events.</div>`}
+      ${i === anchor && running.length ? `<div class="runlist"><div class="runhead">Running all week</div>${running.map(e => runningRowHtml(e, now)).join("")}</div>` : ""}
     </section>`;
   });
   if (pastCount && !showPast) {
@@ -396,10 +428,6 @@ function renderWeek() {
   }
 
   html += raidSectionHtml(ws, we, now);
-
-  if (multi.length) {
-    html += `<h2 class="sec">All week</h2><div class="cards">${multi.map(e => cardHtml(e, "week", now)).join("")}</div>`;
-  }
 
   const bg = inWeek.filter(e => BACKGROUND_KINDS.includes(e.type));
   if (bg.length) {
