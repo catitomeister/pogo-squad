@@ -15,7 +15,7 @@ const db = getFirestore(app);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const NAME_KEY = "pogo.name";
 // The squad. People pick their name from this list (no typing), so names can't drift or duplicate.
-const FRIENDS = ["ShoBaoBao", "Bonkechu", "Brian", "Jen", "Eric", "Ethan", "Jackie", "Karina"];
+const FRIENDS = ["ShoBaoBao", "Bonkechu", "Brian", "Jen", "Eric", "Ethan", "Jackie", "Karina", "Alice"];
 const LABELS = { ShoBaoBao: "ShoBaoBao (Cat)" };
 const ALIASES = { cat: "ShoBaoBao" };  // old free-typed names -> list name (case-insensitive)
 const canonical = n => {
