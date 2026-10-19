@@ -101,6 +101,11 @@ header.top {
 .rchev { color: var(--muted); flex: none; transition: transform 0.15s; }
 .run[open] .rchev { transform: rotate(180deg); }
 .run .ev { margin: 0 8px 8px; }
+.bigrow summary { justify-content: flex-start; }
+.bigrow .rtxt { flex: 1; }
+.bdate { flex: none; width: 62px; text-align: center; font: 700 0.74rem var(--f-data); line-height: 1.3; color: var(--muted); background: var(--chip); border-radius: 10px; padding: 5px 2px; }
+.bdate b { display: block; font: 800 0.98rem var(--f-display); color: var(--ink); }
+.run.regional { opacity: 0.7; }
 .thumb { position: relative; background: var(--chip); aspect-ratio: 3 / 1; display: block; }
 .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .evbody { padding: 10px 14px 14px; display: grid; gap: 6px; align-content: start; min-width: 0; }
@@ -184,6 +189,7 @@ footer a { color: var(--muted); }
     <div class="brand"><svg class="brandmark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><circle cx="256" cy="256" r="256" fill="#1b1b1b"/><rect x="163" y="109" width="42" height="305" fill="#ffffff"/><path d="M163 109H293.5A103.5 103.5 0 0 1 293.5 316H163ZM205 150V273H291.5A61.5 61.5 0 0 0 291.5 150Z" fill="#ffffff" fill-rule="evenodd"/><rect x="205" y="273" width="16" height="43" fill="#1b1b1b"/><circle cx="303" cy="188" r="17" fill="#d93a1e"/><circle cx="277" cy="222" r="17" fill="#d93a1e"/><circle cx="319" cy="228" r="17" fill="#d93a1e"/></svg>POGO <span>Squad</span></div>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="tab-week" aria-selected="true" aria-controls="view-week">Week</button>
+      <button class="tab" role="tab" id="tab-big" aria-selected="false" aria-controls="view-big">Big events</button>
       <button class="tab" role="tab" id="tab-raids" aria-selected="false" aria-controls="view-raids">Raids</button>
       <button class="tab" role="tab" id="tab-research" aria-selected="false" aria-controls="view-research">Research</button>
     </div>
@@ -192,6 +198,7 @@ footer a { color: var(--muted); }
 
 <main class="wrap">
   <section id="view-week" role="tabpanel" aria-labelledby="tab-week"></section>
+  <section id="view-big" role="tabpanel" aria-labelledby="tab-big" hidden></section>
   <section id="view-raids" role="tabpanel" aria-labelledby="tab-raids" hidden></section>
   <section id="view-research" role="tabpanel" aria-labelledby="tab-research" hidden></section>
   <footer id="foot"></footer>
@@ -237,6 +244,10 @@ const KIND = {
   "go-battle-league":"GO Battle League", "go-pass":"GO Pass", "season":"Season", "wild-area":"Wild Area",
   "pokemon-go-tour":"GO Tour", "research":"Research", "twitch-drops":"Twitch Drops", "raid-battles":"Raid rotation"
 };
+const REGION_TZ = {
+  "Sendai • Tohoku": "Asia/Tokyo", "Mexico City": "America/Mexico_City", "Kaohsiung": "Asia/Taipei",
+  "Los Angeles": "America/Los_Angeles", "India": "Asia/Kolkata", "Indonesia": "Asia/Jakarta",
+};
 const BACKGROUND_KINDS = ["season", "go-pass", "research", "go-battle-league", "twitch-drops"];
 const BATTLE_KINDS = ["raid-hour", "raid-day", "raid-battles", "max-battles", "max-mondays"];
 
@@ -252,8 +263,9 @@ const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); r
 const mondayOf = d => { const x = startOfDay(d); return addDays(x, -((x.getDay() + 6) % 7)); };
 const sameDay = (a, b) => startOfDay(a).getTime() === startOfDay(b).getTime();
 const fmtTime = d => d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }).replace(":00", "").replace(/\s/g, " ");
-const fmtMD = d => d.toLocaleDateString([], { month: "short", day: "numeric" });
-const fmtDow = d => d.toLocaleDateString([], { weekday: "short" });
+// tz is optional: region-locked events are on their own local calendar day, not the viewer's
+const fmtMD = (d, tz) => d.toLocaleDateString([], { month: "short", day: "numeric", timeZone: tz });
+const fmtDow = (d, tz) => d.toLocaleDateString([], { weekday: "short", timeZone: tz });
 const fmtDowLong = d => d.toLocaleDateString([], { weekday: "long" });
 function rel(ms) {
   const m = Math.max(1, Math.round(ms / 60000));
@@ -333,7 +345,7 @@ function cardHtml(e, mode, now) {
     return `<article class="ev compact">
       <a class="thumb" href="${esc(e.link)}" target="_blank" rel="noopener" aria-label="Open event page">${e.image ? `<img src="${e.image}" alt="" loading="lazy">` : ""}</a>
       <div class="evbody">
-        <div class="evtop"><span class="when">${when}</span></div>
+        <div class="evtop"><span class="when">${REGION_TZ[e.region] ? `${fmtMD(s, REGION_TZ[e.region])} – ${fmtMD(new Date(en - 1), REGION_TZ[e.region])}` : when}</span></div>
         <div class="name"><a href="${esc(e.link)}" target="_blank" rel="noopener">${esc(e.name)}</a></div>
         <div class="region">📍 ${e.region === "Location-specific" ? "Location-specific event" : "Only in " + esc(e.region)}</div>
       </div>
@@ -368,12 +380,16 @@ function cardHtml(e, mode, now) {
 
 // ---------- week view
 // A running multi-day event as one compact row; tap to open its full card in place.
-function runningRowHtml(e, now) {
-  const en = dt(e.end);
+// one short "what's special" phrase for an event
+function eventHint(e) {
   const keyBonus = (e.bonuses || []).find(isKeyBonus);
-  const hint = e.newShiny && e.newShiny.length ? "✦ " + e.newShiny.slice(0, 2).join(", ")
+  return e.newShiny && e.newShiny.length ? "✦ " + e.newShiny.slice(0, 2).join(", ")
     : e.mons && e.mons.length ? e.mons.slice(0, 2).map(m => m.name).join(", ")
     : keyBonus ? shortBonus(keyBonus.replace(/\*$/, "")) : "";
+}
+function runningRowHtml(e, now) {
+  const en = dt(e.end);
+  const hint = eventHint(e);
   return `<details class="run"><summary>
       <span class="rtxt"><b class="rname">${esc(e.name)}</b>
       <span class="rmeta">until ${fmtDow(en)} ${fmtMD(en)}, ${fmtTime(en)}${hint ? " · " + esc(hint) : ""}</span></span>
@@ -551,8 +567,49 @@ function renderResearch() {
   document.getElementById("view-research").innerHTML = html;
 }
 
+// ---------- big events
+// Headline events only: Community Day, Raid Day, Max Battle Day, Wild Area, GO Tour / GO Fest, and big seasonal
+// events (3+ days). Left out: Minior Showers, City Safari (ticketed), GO Pass, seasons and the weekly stuff.
+const DAY = 86400000;
+const BIG_TYPES = ["community-day", "raid-day", "max-battles", "wild-area", "pokemon-go-tour", "pokemon-go-fest"];
+function isBig(e) {
+  if (BIG_TYPES.includes(e.type)) return true;
+  return e.type === "event" && !/minior showers/i.test(e.name) && dt(e.end) - dt(e.start) >= 3 * DAY;
+}
+function bigRowHtml(e, now) {
+  const s = dt(e.start);
+  const tz = REGION_TZ[e.region];                      // region events: use their own local dates
+  const endDay = new Date(dt(e.end) - 1);
+  const multi = tz ? fmtMD(s, tz) !== fmtMD(endDay, tz) : isMulti(e);
+  const n = Math.round((startOfDay(s) - startOfDay(now)) / DAY);
+  const when = n === 0 ? "today" : n === 1 ? "tomorrow" : `in ${n}d`;
+  const meta = [KIND[e.type] || e.heading, e.region ? "📍 " + e.region : eventHint(e), when].filter(Boolean).join(" · ");
+  return `<details class="run bigrow${e.region ? " regional" : ""}"><summary>
+      <span class="bdate"><b>${fmtMD(s, tz)}</b>${multi ? "→ " + fmtMD(endDay, tz) : fmtDow(s, tz)}</span>
+      <span class="rtxt"><b class="rname">${esc(e.name)}</b><span class="rmeta">${esc(meta)}</span></span>
+      <span class="rchev" aria-hidden="true">▾</span></summary>${cardHtml(e, multi ? "week" : "day", now)}</details>`;
+}
+function renderBig() {
+  const now = new Date();
+  const list = EVENTS.filter(e => isBig(e) && dt(e.end) > now && dt(e.start) >= startOfDay(now))
+    .sort((a, b) => dt(a.start) - dt(b.start));
+  const months = new Map();
+  for (const e of list) {
+    const m = dt(e.start).toLocaleDateString([], { month: "long", year: "numeric" });
+    if (!months.has(m)) months.set(m, []);
+    months.get(m).push(e);
+  }
+  let html = `<h2 class="sec">Big events</h2><p class="sec-sub">Community Days, Raid Days, Max Battle Days, Wild Area, GO Tour and the big seasonal events. Tap one to open it. Only events Niantic has announced so far.</p>`;
+  for (const [m, evs] of months) {
+    html += `<div class="tierlabel">${esc(m)}</div><div class="runlist">${evs.map(e => bigRowHtml(e, now)).join("")}</div>`;
+  }
+  if (!list.length) html += `<p class="quiet">No big events announced yet.</p>`;
+  document.getElementById("view-big").innerHTML = html;
+  window.dispatchEvent(new Event("pogo:render"));
+}
+
 // ---------- tabs & boot
-const TABS = ["week", "raids", "research"];
+const TABS = ["week", "big", "raids", "research"];
 let curTab = null;
 const tabScroll = {};   // each tab remembers how far down you were
 function setTab(which) {
@@ -608,7 +665,8 @@ document.getElementById("foot").innerHTML =
 renderWeek();
 renderRaids();
 renderResearch();
-setTab(["#raids", "#research"].includes(location.hash) ? location.hash.slice(1) : store.get("pogo.tab", "week"));
+renderBig();
+setTab(["#big", "#raids", "#research"].includes(location.hash) ? location.hash.slice(1) : store.get("pogo.tab", "week"));
 // refresh countdowns, but never while someone is typing in a form
 setInterval(() => { if (!document.hidden && !document.activeElement?.closest("form")) renderWeek(); }, 60000);
 </script>

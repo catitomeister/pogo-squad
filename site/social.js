@@ -298,8 +298,9 @@ function report(e) {
 // ---------- live data
 onAuthStateChanged(auth, user => {
   if (!user) return;
-  // only recent entries: old events never show, and this keeps daily reads far below the free quota
-  const since = Timestamp.fromMillis(Date.now() - 60 * 864e5);
+  // only recent entries: old events never show, and this keeps daily reads far below the free quota.
+  // 150 days so a mark made today for an event ~5 months away (e.g. GO Tour) is still there on the day.
+  const since = Timestamp.fromMillis(Date.now() - 150 * 864e5);
   onSnapshot(query(collection(db, "rsvps"), where("ts", ">=", since)), snap => {
     going.clear(); wishes.clear();
     snap.forEach(d => {
