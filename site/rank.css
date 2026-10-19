@@ -1,0 +1,51 @@
+/* Rank tab (website only). Uses the page's colour tokens. */
+.rk-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: grid; gap: 6px; }
+.rk-lab { font: 700 0.72rem var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+.rk-in { width: 100%; font: 1rem var(--f-body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.rk-in:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.rk-iv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.rk-iv label { font-size: 0.8rem; color: var(--muted); display: grid; gap: 4px; }
+.rk-iv .rk-in { font-size: 1.25rem; font-weight: 700; text-align: center; font-family: var(--f-data); }
+.rk-sugg { display: grid; gap: 4px; }
+.rk-sugg:empty { display: none; }
+.rk-pick { appearance: none; text-align: left; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: 700 0.98rem var(--f-body); padding: 9px 12px; border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; gap: 10px; }
+.rk-pick span { color: var(--muted); font-weight: 400; font-size: 0.8rem; }
+.rk-none { color: var(--muted); font-size: 0.9rem; padding: 4px 2px; }
+.rk-set summary { cursor: pointer; font-size: 0.85rem; color: var(--muted); padding: 4px 0; }
+.rk-set[open] { display: grid; gap: 6px; }
+.rk-hint { color: var(--muted); font-size: 0.92rem; margin: 10px 2px; }
+.rk-warn { background: var(--accent-soft); color: var(--accent); border-radius: 10px; padding: 8px 12px; font-size: 0.9rem; font-weight: 700; }
+.rk-h { font: 800 1.1rem var(--f-display); margin: 26px 0 6px; }
+
+.rk-mon { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; margin-top: 10px; padding: 0 14px; }
+.rk-mon summary { cursor: pointer; padding: 11px 0; display: grid; gap: 2px; list-style: none; }
+.rk-mon summary::-webkit-details-marker { display: none; }
+.rk-mon summary b { font-size: 1.1rem; }
+.rk-sum { font: 500 0.8rem var(--f-data); color: var(--muted); }
+.rk-row { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line); }
+.rk-row b { font-size: 0.95rem; }
+.rk-row small { color: var(--muted); font-size: 0.8rem; line-height: 1.4; }
+.rk-dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; background: var(--muted); }
+.rk-dot.g { background: var(--live); }
+.rk-dot.y { background: #e0a020; }
+.rk-dot.r { background: #d04a3a; }
+.rk-acts { padding: 4px 0 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+.rk-btn { appearance: none; text-decoration: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 700 0.88rem var(--f-body); padding: 7px 14px; border-radius: 999px; cursor: pointer; display: inline-block; }
+.rk-btn.on { background: var(--live); border-color: var(--live); color: var(--surface); }
+.rk-legend { font-size: 0.78rem; color: var(--muted); margin: 10px 2px; }
+.rk-legend .rk-dot { width: 9px; height: 9px; margin: 0 2px 0 6px; }
+
+.rk-seg { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 0.82rem; color: var(--muted); margin: 6px 0; }
+.rk-seg button { appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 700 0.85rem var(--f-body); padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+.rk-seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.rk-grp { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px 6px; margin-top: 10px; }
+.rk-gh { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.rk-gh b { font-size: 1.05rem; }
+.rk-gh span { color: var(--muted); font-size: 0.82rem; flex: 1; }
+.rk-tb { width: 100%; border-collapse: collapse; font: 500 0.92rem var(--f-data); font-variant-numeric: tabular-nums; }
+.rk-tb th { text-align: left; font: 700 0.72rem var(--f-body); color: var(--muted); padding: 4px 2px; }
+.rk-tb td { padding: 7px 2px; border-top: 1px solid var(--line); }
+.rk-tb .on { font-weight: 700; color: var(--ink); }
+.rk-x { appearance: none; border: 0; background: none; color: var(--muted); font-size: 1rem; cursor: pointer; padding: 2px 6px; }
+.rk-link { appearance: none; border: 0; background: none; color: var(--accent); font: 700 0.85rem var(--f-body); cursor: pointer; padding: 8px 2px; }
+.rk-code { display: block; font: 500 0.95rem var(--f-data); background: var(--chip); border-radius: 10px; padding: 10px 12px; margin: 8px 0; word-break: break-all; user-select: all; }

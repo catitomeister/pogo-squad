@@ -209,6 +209,58 @@ def hub_counters(name, pid, keep=6, slug=None, page="counters"):
     return out
 
 
+def form_label(name, form):
+    prefix = {"Alola": "Alolan ", "Galarian": "Galarian ", "Hisuian": "Hisuian ", "Paldea": "Paldean "}.get(form)
+    if form == "Normal":
+        return name
+    return prefix + name if prefix else f"{name} ({form.replace('_', ' ')})"
+
+
+def write_pokedex(stats):
+    """site/pokedex.json for the Rank tab: base stats, evolutions and CP multipliers (levels 1-51)."""
+    try:
+        released = {int(k) for k in get_json(PA.format("released_pokemon"))}
+        evolutions = get_json(PA.format("pokemon_evolutions"))
+        raw = {float(x["level"]): x["multiplier"] for x in get_json(PA.format("cp_multiplier"))}
+    except Exception as e:
+        print("  pokedex skipped (keeping the previous file):", e)
+        return
+    cpm = []
+    for i in range(101):                      # levels 1, 1.5 ... 51; above level 45 each half level adds 0.0025
+        lv = 1 + i / 2
+        cpm.append(round(raw[lv], 8) if lv in raw else round(cpm[-1] + 0.0025, 8))
+    by_id = {}
+    for r in stats:
+        if r["pokemon_id"] in released:
+            by_id.setdefault(r["pokemon_id"], []).append(r)
+    dex = {}
+    for pid in sorted(by_id):                 # Normal form first; other forms only if their stats differ (skips costumes)
+        seen = set()
+        for r in sorted(by_id[pid], key=lambda r: (r["form"] != "Normal", r["form"])):
+            tri = (r["base_attack"], r["base_defense"], r["base_stamina"])
+            if tri not in seen:
+                seen.add(tri)
+                dex[f'{pid}:{r["form"]}'] = [form_label(r["pokemon_name"], r["form"]), *tri, []]
+
+    def child_key(pid, form):
+        for f in (form, "Normal"):
+            if f"{pid}:{f}" in dex:
+                return f"{pid}:{f}"
+        return next((k for k in dex if k.startswith(f"{pid}:")), None)
+
+    for e in evolutions:
+        parent = f'{e["pokemon_id"]}:{e["form"]}'
+        if parent not in dex:
+            continue
+        for c in e["evolutions"]:
+            child = child_key(c["pokemon_id"], c.get("form", "Normal"))
+            if child and child != parent and child not in dex[parent][4]:
+                dex[parent][4].append(child)
+    out = ROOT / "site" / "pokedex.json"
+    out.write_text(json.dumps({"v": 1, "cpm": cpm, "m": dex}, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    print(f"pokedex: {len(dex)} Pokémon, {out.stat().st_size // 1024} KB")
+
+
 HEALTH = {"want": 0, "fresh": 0}   # how many counter lists we tried to scrape / actually got
 
 
@@ -544,6 +596,7 @@ def main():
         with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
             f.write(f"counters_ok={'true' if ok else 'false'}\n")
     if SITE:
+        write_pokedex(stats)
         out = ROOT / "site" / "data.json"
         out.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
         used = {Path(x).name for x in re.findall(r'"img/([0-9a-f]+\.webp)"', out.read_text(encoding="utf-8"))}
@@ -568,8 +621,8 @@ def main():
                  '<meta property="og:image:width" content="192"><meta property="og:image:height" content="192">'
                  '<meta name="twitter:card" content="summary">'
                  '<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>'
-                 '<link rel="stylesheet" href="social.css"></head><body>'
-                 + page + '<script type="module" src="social.js"></script></body></html>')
+                 '<link rel="stylesheet" href="social.css"><link rel="stylesheet" href="rank.css"></head><body>'
+                 + page + '<script type="module" src="social.js"></script><script type="module" src="rank.js"></script></body></html>')
         (ROOT / "site" / "index.html").write_text(index, encoding="utf-8")
         (ROOT / "site" / "pogo.ics").write_bytes(ics_text(out_events).encode("utf-8"))
         print(f"Wrote site/index.html + {out.name} ({out.stat().st_size // 1024} KB) + {len(used)} images: {len(out_events)} events, {len(bosses)} bosses")
