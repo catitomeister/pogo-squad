@@ -55,6 +55,11 @@ header.top {
 .tabs { display: flex; gap: 2px; }
 .tab { white-space: nowrap; appearance: none; border: 0; background: none; color: var(--muted); cursor: pointer; font-weight: 700; font-size: 0.98rem; padding: 4px 8px 8px; border-bottom: 3px solid transparent; }
 .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.slide-r { animation: slide-r 0.22s ease-out; }
+.slide-l { animation: slide-l 0.22s ease-out; }
+@keyframes slide-r { from { opacity: 0; transform: translateX(28px); } }
+@keyframes slide-l { from { opacity: 0; transform: translateX(-28px); } }
+@media (prefers-reduced-motion: reduce) { .slide-r, .slide-l { animation: none; } }
 
 /* Week bar (compact) */
 .range { text-align: center; font: 500 0.82rem var(--f-data); color: var(--muted); margin-top: 8px; }
@@ -547,16 +552,53 @@ function renderResearch() {
 }
 
 // ---------- tabs & boot
+const TABS = ["week", "raids", "research"];
+let curTab = null;
+const tabScroll = {};   // each tab remembers how far down you were
 function setTab(which) {
-  for (const t of ["week", "raids", "research"]) {
+  const from = curTab;
+  if (from === which) return;
+  if (from) tabScroll[from] = window.scrollY;
+  for (const t of TABS) {
     document.getElementById("tab-" + t).setAttribute("aria-selected", String(t === which));
     document.getElementById("view-" + t).hidden = t !== which;
   }
+  curTab = which;
   store.set("pogo.tab", which);
+  if (from) {
+    window.scrollTo(0, tabScroll[which] || 0);
+    // slide the new page in from the side it sits on
+    const view = document.getElementById("view-" + which);
+    view.classList.remove("slide-l", "slide-r");
+    void view.offsetWidth;
+    view.classList.add(TABS.indexOf(which) > TABS.indexOf(from) ? "slide-r" : "slide-l");
+  }
 }
-document.getElementById("tab-week").onclick = () => setTab("week");
-document.getElementById("tab-raids").onclick = () => setTab("raids");
-document.getElementById("tab-research").onclick = () => setTab("research");
+TABS.forEach(t => { document.getElementById("tab-" + t).onclick = () => setTab(t); });
+
+// Swipe left/right to move between Week, Raids and Research.
+// Ignored when: the gesture starts at a screen edge (the phone's own back/forward swipe lives there),
+// it is mostly vertical (normal scrolling), a dialog or form is in use, or two fingers are down.
+{
+  let sx = 0, sy = 0, st = 0, ok = false;
+  const EDGE = 28, MIN_DX = 70, SLOPE = 2, MAX_MS = 900;
+  const blocked = el => !!el.closest("input, textarea, select, dialog, [contenteditable]") || !!document.querySelector("dialog[open]");
+  document.addEventListener("touchstart", e => {
+    const t = e.touches[0];
+    ok = e.touches.length === 1 && t.clientX > EDGE && t.clientX < window.innerWidth - EDGE && !blocked(e.target);
+    sx = t.clientX; sy = t.clientY; st = Date.now();
+  }, { passive: true });
+  document.addEventListener("touchcancel", () => { ok = false; }, { passive: true });
+  document.addEventListener("touchend", e => {
+    if (!ok) return;
+    ok = false;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - sx, dy = t.clientY - sy;
+    if (Math.abs(dx) < MIN_DX || Math.abs(dx) < SLOPE * Math.abs(dy) || Date.now() - st > MAX_MS) return;
+    const i = TABS.indexOf(curTab) + (dx < 0 ? 1 : -1);
+    if (i >= 0 && i < TABS.length) setTab(TABS[i]);   // stops at the first and last page
+  }, { passive: true });
+}
 document.getElementById("foot").innerHTML =
   `Data updated ${fmtMD(new Date(DATA.built))} from <a href="https://leekduck.com/events/" target="_blank" rel="noopener">LeekDuck</a> via ` +
   `<a href="https://github.com/bigfoott/ScrapedDuck" target="_blank" rel="noopener">ScrapedDuck</a> (event images © Niantic / The Pokémon Company); base stats from pogoapi.net. ` +
