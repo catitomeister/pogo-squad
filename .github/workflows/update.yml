@@ -20,13 +20,16 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      counters_ok: ${{ steps.build.outputs.counters_ok }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install pillow
-      - run: python build.py --site
+      - id: build
+        run: python build.py --site
       - name: Commit refreshed data
         run: |
           git config user.name "pogo-squad-bot"
@@ -45,3 +48,13 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+  # The site is already deployed by now. If the raid-counter source (Pokémon GO Hub) stopped
+  # working, fail this job so GitHub sends a "Run failed" email; the site keeps the last good counters.
+  verify:
+    needs: [build, deploy]
+    if: ${{ always() && needs.build.outputs.counters_ok == 'false' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "::error::Top counters could not be scraped from Pokémon GO Hub (page format may have changed). The site was still updated and shows the last good counters."
+          exit 1

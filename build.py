@@ -16,8 +16,10 @@ import json
 import math
 import re
 import sys
+import os
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -186,22 +188,57 @@ def hub_counters(name, pid, keep=6, slug=None, page="counters"):
         req = urllib.request.Request(f"{HUB}/pokemon/{slug}/{page}", headers={"User-Agent": "Mozilla/5.0 pogo-squad-build"})
         with urlopen(req, timeout=45) as r:
             t = r.read().decode("utf-8", "replace")
-        for _, row in re.findall(r"<tr><td>(\d+)\.</td>(.*?)</tr>", t, re.S):
-            nm = re.search(r'<img alt="(.*?) Pokémon GO"', row)
-            img = re.search(r'src="(/images/official/thumb/[^"]+)"', row)
+        # Rows look like <tr><td class=..>1.</td><td ..><a title="Name stats, best moves ..">..</a></td><td>fast move</td>..
+        for _, row in re.findall(r"<tr[^>]*>\s*<td[^>]*>\s*(\d+)\.\s*</td>(.*?)</tr>", t, re.S):
+            nm = re.search(r'<a title="(.*?) stats, best moves', row) or re.search(r'<img alt="(.*?) Pok', row)
             moves = re.findall(r'title="Opens (.*?) page with details', row)
             if not nm or len(moves) < 2:
                 continue
+            new = re.search(r'url=(%2Fimages%2Fpokemon%2F[^%&"]+\.webp)', row)      # current markup
+            old = re.search(r'src="(/images/official/thumb/[^"]+)"', row)              # previous markup
+            icon_path = urllib.parse.unquote(new.group(1)) if new else (old.group(1) if old else None)
             cname = html.unescape(nm.group(1))
             out.append({"name": cname.replace(" Forme)", ")"), "fast": html.unescape(moves[0]).rstrip("+* "),
                         "charged": html.unescape(moves[1]).rstrip("+* "),
-                        "icon": icon(HUB + img.group(1)) if img else None})
+                        "icon": icon(HUB + icon_path) if icon_path else None})
             if len(out) >= keep:
                 break
     except Exception as e:
         print("  counters failed:", slug, e)
     _counter_cache[key] = out
     return out
+
+
+HEALTH = {"want": 0, "fresh": 0}   # how many counter lists we tried to scrape / actually got
+
+
+def with_fallback(fetched, key, prev):
+    """Use freshly scraped counters; if the scrape came back empty, keep the last good ones."""
+    HEALTH["want"] += 1
+    if fetched:
+        HEALTH["fresh"] += 1
+        return fetched
+    if key in prev:
+        print("  WARNING: no counters scraped for", key[1:], "- kept the previous ones")
+        return prev[key]
+    print("  WARNING: no counters scraped for", key[1:])
+    return []
+
+
+def load_previous_counters():
+    prev = {}
+    try:
+        d = json.loads((ROOT / "site" / "data.json").read_text(encoding="utf-8"))
+        for b in d.get("bosses", []):
+            if b.get("counters"):
+                prev[("boss", b["name"])] = b["counters"]
+        for e in d.get("events", []):
+            for m in e.get("mons", []):
+                if m.get("counters"):
+                    prev[("mon", e["id"], m["name"])] = m["counters"]
+    except Exception:
+        pass
+    return prev
 
 
 def leek_research_shinies():
@@ -434,11 +471,11 @@ def main():
             bosses.append(entry)
 
     # Top counters (Pokémon GO Hub) for the bosses people plan around: 5-star, Shadow 5-star, Mega
+    prev = load_previous_counters()
     for b in bosses:
-        if b["tier"] in ("5-Star", "Mega"):
-            b["counters"] = hub_counters(b["name"], b.pop("pid", None))
-        else:
-            b.pop("pid", None)
+        pid = b.pop("pid", None)
+        if b["tier"] in ("5-Star", "Mega") and pid:
+            b["counters"] = with_fallback(hub_counters(b["name"], pid), ("boss", b["name"]), prev)
 
     # ---- Current field research, grouped by task type
     research = []
@@ -480,8 +517,9 @@ def main():
             # Max Battle Day bosses: Hub's Max Battle counters (Gigantamax / Dynamax form)
             if e["eventType"] == "max-battles" and st:
                 form = "Gigantamax" if "Gigantamax" in e["name"] else "Dynamax"
-                m["counters"] = hub_counters(m["name"], st["pokemon_id"], slug=f"{st['pokemon_id']}-{form}",
-                                             page="counters-max-battles")
+                m["counters"] = with_fallback(
+                    hub_counters(m["name"], st["pokemon_id"], slug=f"{st['pokemon_id']}-{form}", page="counters-max-battles"),
+                    ("mon", e["eventID"], m["name"]), prev)
         extras = {"bonuses": [], "newShiny": [], "evolve": None}
         if e["eventType"] not in ("go-battle-league", "go-pass", "season", "raid-battles", "twitch-drops"):
             extras = page_extras(e["link"])
@@ -500,6 +538,11 @@ def main():
         "bosses": bosses,
         "research": research,
     }
+    ok = HEALTH["want"] == 0 or HEALTH["fresh"] * 2 >= HEALTH["want"]
+    print(f"counters: {HEALTH['fresh']}/{HEALTH['want']} scraped fresh -> {'ok' if ok else 'FAILED (Pokémon GO Hub page format may have changed)'}")
+    if os.environ.get("GITHUB_OUTPUT"):
+        with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+            f.write(f"counters_ok={'true' if ok else 'false'}\n")
     if SITE:
         out = ROOT / "site" / "data.json"
         out.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
