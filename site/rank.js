@@ -54,6 +54,8 @@ function table(key, league, cap) {
   cache.set(ck, t);
   return t;
 }
+const picFile = k => `dex/${encodeURIComponent(k.replace(":", "-"))}.webp`;
+const pic = k => `<img class="rk-pic" src="${picFile(k)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`;
 const ivOf = i => `${i >> 8}/${(i >> 4) & 15}/${i & 15}`;
 // rank among only the IVs that are possible from the chosen source (every IV >= floor)
 function rankFrom(t, i, floor) {
@@ -143,7 +145,7 @@ function renderSuggest(q) {
   if (!q || (sel && dex.m[sel][0].toLowerCase() === q)) { box.innerHTML = ""; return; }
   const hits = names.filter(n => n.lc.includes(q)).sort((a, b) => (b.lc.startsWith(q) - a.lc.startsWith(q)) || a.id - b.id).slice(0, 8);
   box.innerHTML = hits.length
-    ? hits.map(h => `<button type="button" class="rk-pick" data-act="pick" data-k="${esc(h.k)}">${esc(h.label)}<span>#${h.id}</span></button>`).join("")
+    ? hits.map(h => `<button type="button" class="rk-pick" data-act="pick" data-k="${esc(h.k)}">${pic(h.k)}<em>${esc(h.label)}</em><span>#${h.id}</span></button>`).join("")
     : `<div class="rk-none">No Pokémon called “${esc(q)}”.</div>`;
 }
 
@@ -156,7 +158,7 @@ function cardHtml(key, a, d, s, cap, floor, open) {
   const sig = `${key}|${a}|${d}|${s}|${cap}`;
   const same = table(key, 0, cap).lvl.every(l => l === (cap - 1) * 2);   // never reaches 1500 CP: every league ranks it the same
   return `<details class="rk-mon" data-k="${esc(key)}"${open ? " open" : ""}>
-    <summary><b>${esc(m[0])}</b><span class="rk-sum">${res.map(x => `${x.L.name} #${x.r}`).join(" · ")}</span></summary>
+    <summary>${pic(key)}<span class="rk-t"><b>${esc(m[0])}</b><span class="rk-sum">${res.map(x => `${x.L.name} #${x.r}`).join(" · ")}</span></span></summary>
     ${res.map(x => `<div class="rk-row">
       <b>${x.L.name}</b>
       <span>#${x.r} <small>of 4096</small> · ${x.pct.toFixed(1)}%<br><small>CP ${x.cp} · Lv ${x.lv}${x.xl ? " · needs XL" : ""} · best ${x.best}${x.from ? ` · #${x.from[0]} of ${x.from[1]} from this source` : ""}</small></span>
@@ -193,7 +195,7 @@ function renderList() {
       rows.sort((p, q) => p.r[sortLeague] - q.r[sortLeague]);
       const text = [`${dex.m[k][0]} IVs (Great / Ultra / Master rank)`, ...rows.slice(0, 8).map(e => `${e.a}/${e.d}/${e.s} · #${e.r[0]} / #${e.r[1]} / #${e.r[2]}`),
         `👉 ${location.origin}${location.pathname}`].join("\n");
-      return `<div class="rk-grp"><div class="rk-gh"><b>${esc(dex.m[k][0])}</b> <span>${rows.length} checked</span>
+      return `<div class="rk-grp"><div class="rk-gh">${pic(k)}<b>${esc(dex.m[k][0])}</b> <span>${rows.length} checked</span>
         <a class="rk-btn" href="https://wa.me/?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">Share</a></div>
         <table class="rk-tb"><tr><th>IVs</th>${LEAGUES.map((L, li) => `<th${li === sortLeague ? ' class="on"' : ""}>${L.name}</th>`).join("")}<th></th><th></th></tr>
         ${rows.map(e => `<tr><td>${e.a}/${e.d}/${e.s}</td>${e.r.map((r, li) => `<td${li === sortLeague ? ' class="on"' : ""}>#${r}</td>`).join("")}

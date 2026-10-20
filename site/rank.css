@@ -9,6 +9,9 @@
 .rk-sugg { display: grid; gap: 4px; }
 .rk-sugg:empty { display: none; }
 .rk-pick { appearance: none; text-align: left; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: 700 0.98rem var(--f-body); padding: 9px 12px; border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; gap: 10px; }
+.rk-pick { align-items: center; }
+.rk-pick .rk-pic { width: 36px; height: 36px; }
+.rk-pick em { flex: 1; font-style: normal; }
 .rk-pick span { color: var(--muted); font-weight: 400; font-size: 0.8rem; }
 .rk-none { color: var(--muted); font-size: 0.9rem; padding: 4px 2px; }
 .rk-set summary { cursor: pointer; font-size: 0.85rem; color: var(--muted); padding: 4px 0; }
@@ -18,7 +21,9 @@
 .rk-h { font: 800 1.1rem var(--f-display); margin: 26px 0 6px; }
 
 .rk-mon { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; margin-top: 10px; padding: 0 14px; }
-.rk-mon summary { cursor: pointer; padding: 11px 0; display: grid; gap: 2px; list-style: none; }
+.rk-mon summary { cursor: pointer; padding: 10px 0; display: flex; align-items: center; gap: 10px; list-style: none; }
+.rk-t { display: grid; gap: 2px; min-width: 0; }
+.rk-pic { width: 54px; height: 54px; object-fit: contain; flex: none; }
 .rk-mon summary::-webkit-details-marker { display: none; }
 .rk-mon summary b { font-size: 1.1rem; }
 .rk-sum { font: 500 0.8rem var(--f-data); color: var(--muted); }
@@ -40,6 +45,7 @@
 .rk-seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 .rk-grp { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px 6px; margin-top: 10px; }
 .rk-gh { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.rk-gh .rk-pic { width: 40px; height: 40px; }
 .rk-gh b { font-size: 1.05rem; }
 .rk-gh span { color: var(--muted); font-size: 0.82rem; flex: 1; }
 .rk-tb { width: 100%; border-collapse: collapse; font: 500 0.92rem var(--f-data); font-variant-numeric: tabular-nums; }

@@ -9,6 +9,8 @@ Usage:
   python build.py --site   # website: site/data.json + site/img/*.webp (GitHub Pages)
 """
 import base64
+import collections
+import concurrent.futures
 import hashlib
 import html
 import io
@@ -216,6 +218,44 @@ def form_label(name, form):
     return prefix + name if prefix else f"{name} ({form.replace('_', ' ')})"
 
 
+DEX_IMG = ROOT / "site" / "dex"
+LEEK_ICONS = "https://cdn.leekduck.com/assets/img/pokemon_icons/"
+
+
+def dex_file(key):
+    return key.replace(":", "-") + ".webp"
+
+
+def fetch_dex_images(dex):
+    """One small icon per Pokémon for the Rank tab. Downloaded once; files already in site/dex are kept."""
+    DEX_IMG.mkdir(parents=True, exist_ok=True)
+
+    def get(key):
+        target = DEX_IMG / dex_file(key)
+        if target.exists():
+            return "have"
+        pid, form = key.split(":")
+        names = ([f"pm{pid}.f{form.upper()}.icon.png"] if form != "Normal" else []) + [f"pm{pid}.icon.png", f"pm{pid}.fNORMAL.icon.png"]
+        for n in names:
+            try:
+                req = urllib.request.Request(LEEK_ICONS + n, headers={"User-Agent": "Mozilla/5.0 pogo-squad-build"})
+                with urlopen(req, timeout=30) as r:
+                    img = Image.open(io.BytesIO(r.read())).convert("RGBA")
+            except Exception:
+                continue
+            bbox = img.getbbox()
+            if bbox:
+                img = img.crop(bbox)
+            img.thumbnail((96, 96))
+            img.save(target, "WEBP", quality=80)
+            return "new"
+        return "missing"
+
+    with concurrent.futures.ThreadPoolExecutor(8) as ex:
+        c = collections.Counter(ex.map(get, list(dex)))
+    print(f"dex icons: {c['have']} kept, {c['new']} downloaded, {c['missing']} without a picture")
+
+
 def write_pokedex(stats):
     """site/pokedex.json for the Rank tab: base stats, evolutions and CP multipliers (levels 1-51)."""
     try:
@@ -259,6 +299,7 @@ def write_pokedex(stats):
     out = ROOT / "site" / "pokedex.json"
     out.write_text(json.dumps({"v": 1, "cpm": cpm, "m": dex}, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(f"pokedex: {len(dex)} Pokémon, {out.stat().st_size // 1024} KB")
+    fetch_dex_images(dex)
 
 
 HEALTH = {"want": 0, "fresh": 0}   # how many counter lists we tried to scrape / actually got
