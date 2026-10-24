@@ -226,33 +226,55 @@ def dex_file(key):
     return key.replace(":", "-") + ".webp"
 
 
+# pictures for specific forms that the Regional tool shows (file stem in site/dex -> LeekDuck icon name);
+# these forms share stats with the base Pokémon, so they are not in the Rank table
+EXTRA_ICONS = {
+    "741-Pompom": "pm741.fPOMPOM", "741-Pau": "pm741.fPAU", "741-Sensu": "pm741.fSENSU",
+    "676-Diamond": "pm676.fDIAMOND", "676-Debutante": "pm676.fDEBUTANTE", "676-Star": "pm676.fSTAR", "676-La_reine": "pm676.fLA_REINE",
+    "978-Droopy": "pm978.fDROOPY", "978-Stretchy": "pm978.fSTRETCHY",
+    "669-Red": "pm669.fRED", "669-Yellow": "pm669.fYELLOW",
+    "422-West_sea": "pm422.fWEST_SEA",
+    "550-Red_striped": "pm550.fRED_STRIPED",
+    "128-Paldea_combat": "pm128.fPALDEA_COMBAT", "128-Paldea_blaze": "pm128.fPALDEA_BLAZE",
+    "931-Green": "pm931.fGREEN", "931-Blue": "pm931.fBLUE",
+    "843-Normal": "pm843",
+}
+
+
+def save_icon(names, target):
+    """Download the first icon that exists, crop the empty border, shrink it and save it as webp."""
+    for n in names:
+        try:
+            req = urllib.request.Request(LEEK_ICONS + n + ".icon.png", headers={"User-Agent": "Mozilla/5.0 pogo-squad-build"})
+            with urlopen(req, timeout=30) as r:
+                img = Image.open(io.BytesIO(r.read())).convert("RGBA")
+        except Exception:
+            continue
+        bbox = img.getbbox()
+        if bbox:
+            img = img.crop(bbox)
+        img.thumbnail((96, 96))
+        img.save(target, "WEBP", quality=80)
+        return "new"
+    return "missing"
+
+
 def fetch_dex_images(dex):
-    """One small icon per Pokémon for the Rank tab. Downloaded once; files already in site/dex are kept."""
+    """One small icon per Pokémon for the Rank tab, plus EXTRA_ICONS. Downloaded once; existing files are kept."""
     DEX_IMG.mkdir(parents=True, exist_ok=True)
 
-    def get(key):
-        target = DEX_IMG / dex_file(key)
-        if target.exists():
-            return "have"
-        pid, form = key.split(":")
-        names = ([f"pm{pid}.f{form.upper()}.icon.png"] if form != "Normal" else []) + [f"pm{pid}.icon.png", f"pm{pid}.fNORMAL.icon.png"]
-        for n in names:
-            try:
-                req = urllib.request.Request(LEEK_ICONS + n, headers={"User-Agent": "Mozilla/5.0 pogo-squad-build"})
-                with urlopen(req, timeout=30) as r:
-                    img = Image.open(io.BytesIO(r.read())).convert("RGBA")
-            except Exception:
-                continue
-            bbox = img.getbbox()
-            if bbox:
-                img = img.crop(bbox)
-            img.thumbnail((96, 96))
-            img.save(target, "WEBP", quality=80)
-            return "new"
-        return "missing"
+    def get(item):
+        stem, names = item
+        target = DEX_IMG / (stem + ".webp")
+        return "have" if target.exists() else save_icon(names, target)
 
+    jobs = []
+    for key in dex:
+        pid, form = key.split(":")
+        jobs.append((dex_file(key)[:-5], ([f"pm{pid}.f{form.upper()}"] if form != "Normal" else []) + [f"pm{pid}", f"pm{pid}.fNORMAL"]))
+    jobs += [(stem, [name]) for stem, name in EXTRA_ICONS.items()]
     with concurrent.futures.ThreadPoolExecutor(8) as ex:
-        c = collections.Counter(ex.map(get, list(dex)))
+        c = collections.Counter(ex.map(get, jobs))
     print(f"dex icons: {c['have']} kept, {c['new']} downloaded, {c['missing']} without a picture")
 
 
