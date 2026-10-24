@@ -1,6 +1,7 @@
 // Rank checker: where a Pokémon's IVs rank for Great / Ultra / Master League (PvP).
 // Everything is calculated in the browser from base stats (pokedex.json); nothing is sent anywhere.
-const view = document.getElementById("view-rank");
+const section = document.getElementById("view-rank");   // the Tools tab
+const view = document.getElementById("tool-rank");        // the Rank checker pane inside it
 
 const LEAGUES = [{ name: "Great", cap: 1500 }, { name: "Ultra", cap: 2500 }, { name: "Master", cap: 99999 }];
 // minimum IV per stat depending on where the Pokémon came from
@@ -319,7 +320,10 @@ async function start() {
   }
   init();
 }
-if (view) {
-  new MutationObserver(() => { if (!view.hidden) start(); }).observe(view, { attributes: true, attributeFilter: ["hidden"] });
-  if (!view.hidden) start();
+if (section && view) {
+  const check = () => { if (!section.hidden && !view.hidden) start(); };
+  const mo = new MutationObserver(check);
+  mo.observe(section, { attributes: true, attributeFilter: ["hidden"] });
+  mo.observe(view, { attributes: true, attributeFilter: ["hidden"] });
+  check();
 }

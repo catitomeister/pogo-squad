@@ -662,8 +662,8 @@ def main():
                  '<meta property="og:image:width" content="192"><meta property="og:image:height" content="192">'
                  '<meta name="twitter:card" content="summary">'
                  '<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>'
-                 '<link rel="stylesheet" href="social.css"><link rel="stylesheet" href="rank.css"></head><body>'
-                 + page + '<script type="module" src="social.js"></script><script type="module" src="rank.js"></script></body></html>')
+                 '<link rel="stylesheet" href="social.css"><link rel="stylesheet" href="rank.css"><link rel="stylesheet" href="regional.css"></head><body>'
+                 + page + '<script type="module" src="social.js"></script><script type="module" src="rank.js"></script><script type="module" src="regional.js"></script></body></html>')
         (ROOT / "site" / "index.html").write_text(index, encoding="utf-8")
         (ROOT / "site" / "pogo.ics").write_bytes(ics_text(out_events).encode("utf-8"))
         print(f"Wrote site/index.html + {out.name} ({out.stat().st_size // 1024} KB) + {len(used)} images: {len(out_events)} events, {len(bosses)} bosses")

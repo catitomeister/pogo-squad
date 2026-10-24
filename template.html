@@ -193,7 +193,7 @@ footer a { color: var(--muted); }
       <button class="tab" role="tab" id="tab-raids" aria-selected="false" aria-controls="view-raids">Raids</button>
       <button class="tab" role="tab" id="tab-research" aria-selected="false" aria-controls="view-research">Research</button>
       <button class="tab" role="tab" id="tab-big" aria-selected="false" aria-controls="view-big">Events</button>
-      <button class="tab" role="tab" id="tab-rank" aria-selected="false" aria-controls="view-rank">Rank</button>
+      <button class="tab" role="tab" id="tab-rank" aria-selected="false" aria-controls="view-rank">Tools</button>
     </div>
   </div>
 </header>
@@ -203,7 +203,11 @@ footer a { color: var(--muted); }
   <section id="view-big" role="tabpanel" aria-labelledby="tab-big" hidden></section>
   <section id="view-raids" role="tabpanel" aria-labelledby="tab-raids" hidden></section>
   <section id="view-research" role="tabpanel" aria-labelledby="tab-research" hidden></section>
-  <section id="view-rank" role="tabpanel" aria-labelledby="tab-rank" hidden><p class="quiet">The rank checker is on the website.</p></section>
+  <section id="view-rank" role="tabpanel" aria-labelledby="tab-rank" hidden>
+    <div class="rk-seg" role="group" aria-label="Tool"><button type="button" data-tool="rank" aria-pressed="true">Rank checker</button><button type="button" data-tool="regional" aria-pressed="false">Regional</button></div>
+    <div id="tool-rank"><p class="quiet">The rank checker is on the website.</p></div>
+    <div id="tool-regional" hidden><p class="quiet">The regional list is on the website.</p></div>
+  </section>
   <footer id="foot"></footer>
 </main>
 
@@ -635,6 +639,20 @@ function setTab(which) {
   }
 }
 TABS.forEach(t => { document.getElementById("tab-" + t).onclick = () => setTab(t); });
+
+// Tools tab: Rank checker | Regional
+{
+  const panes = { rank: document.getElementById("tool-rank"), regional: document.getElementById("tool-regional") };
+  const buttons = document.querySelectorAll("[data-tool]");
+  const showTool = which => {
+    if (!panes[which]) which = "rank";
+    for (const [k, el] of Object.entries(panes)) el.hidden = k !== which;
+    buttons.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.tool === which)));
+    store.set("pogo.tool", which);
+  };
+  buttons.forEach(b => b.addEventListener("click", () => showTool(b.dataset.tool)));
+  showTool(store.get("pogo.tool", "rank"));
+}
 
 // Swipe left/right to move between Week, Raids and Research.
 // Ignored when: the gesture starts at a screen edge (the phone's own back/forward swipe lives there),
