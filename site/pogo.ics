@@ -6,33 +6,8 @@ X-WR-CALNAME:POGO Squad
 REFRESH-INTERVAL;VALUE=DURATION:PT12H
 X-PUBLISHED-TTL:PT12H
 BEGIN:VEVENT
-UID:dynamax-uxie-mesprit-azelf-max-battle-day-2026@pogo-squad
-DTSTAMP:20261025T122827Z
-DTSTART:20261024T140000
-DTEND:20261024T170000
-SUMMARY:Dynamax Uxie\, Mesprit\, and Azelf Max Battle Day
-LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
- CA 91709
-DESCRIPTION:Uxie (100% 1442)\, Mesprit (100% 1747)\, Azelf (100% 1834)\nRem
- ote raid limit 20/day (normally 10)\nMax Particle collection limit increas
- ed to 1\,600\nAll Power Spots will host Dynamax Battles\nPower Spots will 
- refresh more frequently\nhttps://catitomeister.github.io/pogo-squad/
-END:VEVENT
-BEGIN:VEVENT
-UID:minior-showers-orionids-2026@pogo-squad
-DTSTAMP:20261025T122827Z
-DTSTART:20261019T170000
-DTEND:20261024T235900
-SUMMARY:Minior Showers: Orionids 2026
-LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
- CA 91709
-DESCRIPTION:Minior\n1\,000 Stardust for catching Minior\nIncreased chance t
- o encounter Minior from 5:00 p.m. to 9:00 p.m. local time each day\nhttps:
- //catitomeister.github.io/pogo-squad/
-END:VEVENT
-BEGIN:VEVENT
 UID:pokemon-go-city-safari-boston-2026-rescheduled@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261024T100000
 DTEND:20261025T180000
 SUMMARY:Pokémon GO City Safari: Boston (Rescheduled)
@@ -44,7 +19,7 @@ DESCRIPTION:Increased Shiny chance\nFour-hour Lure Modules (excluding Golde
 END:VEVENT
 BEGIN:VEVENT
 UID:max-mondays-2026-10-26@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261026T060000
 DTEND:20261026T210000
 SUMMARY:Dynamax Sableye during Max Monday
@@ -54,7 +29,7 @@ DESCRIPTION:Sableye (100% 843)\nhttps://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
 UID:mega-charizard-x-mega-charizard-y-in-mega-raids-october-2026@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261021T060000
 DTEND:20261027T220000
 SUMMARY:Mega Charizard X and Mega Charizard Y in Mega Raids
@@ -65,7 +40,7 @@ DESCRIPTION:Mega Charizard X (100% 1651)\, Mega Charizard Y (100% 1651)\nht
 END:VEVENT
 BEGIN:VEVENT
 UID:palkia-in-5-star-raid-battles-october-2026@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261021T060000
 DTEND:20261027T220000
 SUMMARY:Palkia in 5-star Raid Battles
@@ -75,7 +50,7 @@ DESCRIPTION:Palkia (100% 2280)\nhttps://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
 UID:raidhour20261028@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261028T180000
 DTEND:20261028T190000
 SUMMARY:Giratina (Origin Forme) Raid Hour
@@ -86,7 +61,7 @@ DESCRIPTION:Giratina (Origin) (100% 2105)\nhttps://catitomeister.github.io/
 END:VEVENT
 BEGIN:VEVENT
 UID:pokemonspotlighthour2026-10-29@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261029T180000
 DTEND:20261029T190000
 SUMMARY:Gastly Spotlight Hour
@@ -97,7 +72,7 @@ DESCRIPTION:Gastly (100% 702)\n2× Evolution XP\nhttps://catitomeister.gith
 END:VEVENT
 BEGIN:VEVENT
 UID:chandelure-super-mega-raid-day-2026@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261031T140000
 DTEND:20261031T170000
 SUMMARY:Chandelure Super Mega Raid Day
@@ -111,7 +86,7 @@ DESCRIPTION:Chandelure (100% 1867)\nRemote Raid limit increased to 20 from
 END:VEVENT
 BEGIN:VEVENT
 UID:halloween-2026-part-1@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261027T100000
 DTEND:20261101T100000
 SUMMARY:Pokémon GO Halloween 2026 Part I
@@ -123,7 +98,7 @@ DESCRIPTION:2× Candy for catching Pokémon\nGO Pass Deluxe: 3× Candy for
 END:VEVENT
 BEGIN:VEVENT
 UID:max-mondays-2026-11-02@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261102T060000
 DTEND:20261102T210000
 SUMMARY:Dynamax Machop during Max Monday
@@ -133,7 +108,7 @@ DESCRIPTION:Machop (100% 730)\nhttps://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
 UID:shadow-landorus-incarnate-forme-in-shadow-raids-october-2026@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261007T060000
 DTEND:20261103T220000
 SUMMARY:Shadow Landorus (Incarnate Forme) in Shadow Raids
@@ -144,7 +119,7 @@ DESCRIPTION:Landorus (Incarnate) (100% 2050)\nhttps://catitomeister.github.
 END:VEVENT
 BEGIN:VEVENT
 UID:giratina-origin-forme-in-5-star-raid-battles-october-2026@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261028T060000
 DTEND:20261103T220000
 SUMMARY:Giratina (Origin Forme) in 5-star Raid Battles
@@ -155,7 +130,7 @@ DESCRIPTION:Giratina (Origin) (100% 2105)\nhttps://catitomeister.github.io/
 END:VEVENT
 BEGIN:VEVENT
 UID:raidhour20261104@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261104T180000
 DTEND:20261104T190000
 SUMMARY:Giratina (Altered Forme) Raid Hour
@@ -166,7 +141,7 @@ DESCRIPTION:Giratina (Altered) (100% 1931)\nhttps://catitomeister.github.io
 END:VEVENT
 BEGIN:VEVENT
 UID:pokemonspotlighthour2026-11-05@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261105T180000
 DTEND:20261105T190000
 SUMMARY:Teddiursa wearing a witch hat Spotlight Hour
@@ -177,7 +152,7 @@ DESCRIPTION:Teddiursa wearing a witch hat\n2× Evolution XP\nhttps://catito
 END:VEVENT
 BEGIN:VEVENT
 UID:halloween-2026-part-2@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261101T100000
 DTEND:20261105T200000
 SUMMARY:Pokémon GO Halloween 2026 Part II
@@ -189,7 +164,7 @@ DESCRIPTION:2× Candy for catching Pokémon\nGO Pass Deluxe: 3× Candy for
 END:VEVENT
 BEGIN:VEVENT
 UID:mega-sableye-in-mega-raids-october-2026@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261028T060000
 DTEND:20261108T220000
 SUMMARY:Mega Sableye in Mega Raids
@@ -200,7 +175,7 @@ DESCRIPTION:Mega Sableye (100% 843)\nhttps://catitomeister.github.io/pogo-s
 END:VEVENT
 BEGIN:VEVENT
 UID:giratina-altered-forme-in-5-star-raid-battles-november-2026@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261104T060000
 DTEND:20261108T220000
 SUMMARY:Giratina (Altered Forme) in 5-star Raid Battles
@@ -212,7 +187,7 @@ END:VEVENT
 BEGIN:VEVENT
 UID:shadow-tornadus-incarnate-forme-in-shadow-raids-november-4-2026@pogo-sq
  uad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261104T060000
 DTEND:20261108T220000
 SUMMARY:Shadow Tornadus (Incarnate Forme) in Shadow Raids
@@ -223,7 +198,7 @@ DESCRIPTION:Tornadus (Incarnate) (100% 1911)\nhttps://catitomeister.github.
 END:VEVENT
 BEGIN:VEVENT
 UID:into-the-wild-2026@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261109T100000
 DTEND:20261113T200000
 SUMMARY:Into the Wild
@@ -236,7 +211,7 @@ DESCRIPTION:Remote Raid limit increased to 30 from Monday\, November 9\, to
 END:VEVENT
 BEGIN:VEVENT
 UID:pokemon-go-wild-area-2026-global@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261114T100000
 DTEND:20261115T180000
 SUMMARY:Pokémon GO Wild Area 2026: Global
@@ -248,7 +223,7 @@ DESCRIPTION:Chance to get GO Safari Balls from PokéStops and Gyms\nUp to 3
 END:VEVENT
 BEGIN:VEVENT
 UID:max-mondays-2026-11-16@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261116T060000
 DTEND:20261116T210000
 SUMMARY:Max Monday: Pokémon to be announced
@@ -258,7 +233,7 @@ DESCRIPTION:https://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
 UID:raidhour20261118@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261118T180000
 DTEND:20261118T190000
 SUMMARY:Cresselia and Darkrai Raid Hour
@@ -269,7 +244,7 @@ DESCRIPTION:Cresselia (100% 1633)\, Darkrai (100% 2136)\nhttps://catitomeis
 END:VEVENT
 BEGIN:VEVENT
 UID:minior-showers-leonids-2026@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261114T170000
 DTEND:20261119T235900
 SUMMARY:Minior Showers: Leonids 2026
@@ -281,7 +256,7 @@ DESCRIPTION:Minior\nIncreased Stardust for catching Minior\nIncreased chanc
 END:VEVENT
 BEGIN:VEVENT
 UID:november-communityday2026@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261121T140000
 DTEND:20261121T170000
 SUMMARY:Pawniard Community Day
@@ -294,7 +269,7 @@ DESCRIPTION:Pawniard (100% 819)\nEvolve Bisharp during the event or up to f
 END:VEVENT
 BEGIN:VEVENT
 UID:dynamax-trails-2026@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261116T100000
 DTEND:20261123T200000
 SUMMARY:Dynamax Trails
@@ -304,7 +279,7 @@ DESCRIPTION:https://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
 UID:max-mondays-2026-11-23@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261123T060000
 DTEND:20261123T210000
 SUMMARY:Dynamax Espurr during Max Monday
@@ -314,7 +289,7 @@ DESCRIPTION:Espurr (100% 719)\nhttps://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
 UID:cresselia-darkrai-in-5-star-raid-battles-november-2026@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261116T060000
 DTEND:20261124T220000
 SUMMARY:Cresselia and Darkrai in 5-star Raid Battles
@@ -325,7 +300,7 @@ DESCRIPTION:Cresselia (100% 1633)\, Darkrai (100% 2136)\nhttps://catitomeis
 END:VEVENT
 BEGIN:VEVENT
 UID:mega-banette-in-mega-raids-november-2026@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261116T060000
 DTEND:20261124T220000
 SUMMARY:Mega Banette in Mega Raids
@@ -336,7 +311,7 @@ DESCRIPTION:Mega Banette (100% 1313)\nhttps://catitomeister.github.io/pogo-
 END:VEVENT
 BEGIN:VEVENT
 UID:raidhour20261125@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261125T180000
 DTEND:20261125T190000
 SUMMARY:Deoxys (Normal\, Defense\, Attack\, and Speed Formes) Raid Hour
@@ -346,7 +321,7 @@ DESCRIPTION:Deoxys (100% 1806)\nhttps://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
 UID:pokemonspotlighthour2026-11-26@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261126T180000
 DTEND:20261126T190000
 SUMMARY:Noibat Spotlight Hour
@@ -357,7 +332,7 @@ DESCRIPTION:Noibat (100% 381)\n2× Catch Candy\nhttps://catitomeister.githu
 END:VEVENT
 BEGIN:VEVENT
 UID:super-mega-raid-day-november-2026@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261128T140000
 DTEND:20261128T170000
 SUMMARY:Super Mega Raid Day
@@ -367,7 +342,7 @@ DESCRIPTION:https://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
 UID:twilight-wishes-2026@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261124T100000
 DTEND:20261130T200000
 SUMMARY:Twilight Wishes
@@ -377,7 +352,7 @@ DESCRIPTION:https://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
 UID:max-mondays-2026-11-30@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261130T060000
 DTEND:20261130T210000
 SUMMARY:Dynamax Cryogonal during Max Monday
@@ -389,7 +364,7 @@ END:VEVENT
 BEGIN:VEVENT
 UID:shadow-tornadus-incarnate-forme-in-shadow-raids-november-16-2026@pogo-s
  quad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261116T060000
 DTEND:20261201T220000
 SUMMARY:Shadow Tornadus (Incarnate Forme) in Shadow Raids
@@ -401,7 +376,7 @@ END:VEVENT
 BEGIN:VEVENT
 UID:deoxys-normal-defense-attack-speed-formes-in-5-star-raid-battles-novemb
  er-2026@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261125T060000
 DTEND:20261201T220000
 SUMMARY:Deoxys (Normal\, Defense\, Attack\, and Speed Formes) in 5-star Rai
@@ -413,7 +388,7 @@ DESCRIPTION:Deoxys (Normal) (100% 1806)\, Deoxys (Defense) (100% 1299)\, De
 END:VEVENT
 BEGIN:VEVENT
 UID:mega-metagross-in-mega-raids-november-2026@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261125T060000
 DTEND:20261201T220000
 SUMMARY:Mega Metagross in Mega Raids
@@ -424,7 +399,7 @@ DESCRIPTION:Mega Metagross (100% 2166)\nhttps://catitomeister.github.io/pog
 END:VEVENT
 BEGIN:VEVENT
 UID:minior-showers-geminids-2026@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20261211T170000
 DTEND:20261216T235900
 SUMMARY:Minior Showers: Geminids 2026
@@ -436,7 +411,7 @@ DESCRIPTION:Minior\nIncreased Stardust for catching Minior\nIncreased chanc
 END:VEVENT
 BEGIN:VEVENT
 UID:pokemon-go-tour-alola-global-2027@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20270227T000000
 DTEND:20270228T235959
 SUMMARY:Pokémon GO Tour: Alola - Global 2027
@@ -446,7 +421,7 @@ DESCRIPTION:https://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
 UID:minior-showers-eta-aquariids-2027@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20270503T170000
 DTEND:20270508T235900
 SUMMARY:Minior Showers: Eta Aquariids 2027
@@ -458,7 +433,7 @@ DESCRIPTION:Minior\nIncreased Stardust for catching Minior\nIncreased chanc
 END:VEVENT
 BEGIN:VEVENT
 UID:minior-showers-southern-delta-aquariids-2027@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20270728T170000
 DTEND:20270802T235900
 SUMMARY:Minior Showers: Southern Delta Aquariids 2027
@@ -470,7 +445,7 @@ DESCRIPTION:Minior\nIncreased Stardust for catching Minior\nIncreased chanc
 END:VEVENT
 BEGIN:VEVENT
 UID:minior-showers-perseids-2027@pogo-squad
-DTSTAMP:20261025T122827Z
+DTSTAMP:20261026T144241Z
 DTSTART:20270810T170000
 DTEND:20270815T235900
 SUMMARY:Minior Showers: Perseids 2027
