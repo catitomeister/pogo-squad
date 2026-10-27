@@ -61,6 +61,21 @@ def urlopen(req, timeout=30, tries=3):
             time.sleep(2 * (i + 1))
 
 
+def js_json(obj):
+    """JSON for embedding inside an inline <script>. Scraped text can never contain a literal closing script tag:
+    the characters < > & and the two JavaScript line separators are written as backslash-u escapes."""
+    bs = chr(92)
+    out = json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
+    for ch in "<>&" + chr(0x2028) + chr(0x2029):
+        out = out.replace(ch, "%su%04x" % (bs, ord(ch)))
+    return out
+
+
+def safe_link(u):
+    """Links from scraped data are only kept if they are https URLs."""
+    return u if isinstance(u, str) and u.startswith("https://") else "#"
+
+
 def get_json(url):
     req = urllib.request.Request(url, headers={"User-Agent": "pogo-squad-build"})
     with urlopen(req, timeout=45) as r:
@@ -72,7 +87,7 @@ _icon_cache = {}
 
 def icon(url):
     """Download a Pokémon icon and return a small webp data URI (or None)."""
-    if not url:
+    if not url or not url.startswith("https://"):
         return None
     if url in _icon_cache:
         return _icon_cache[url]
@@ -94,7 +109,7 @@ def icon(url):
 
 def banner(url):
     """Download an event banner and return a 640px-wide webp data URI (or None)."""
-    if not url:
+    if not url or not url.startswith("https://"):
         return None
     key = "banner:" + url
     if key in _icon_cache:
@@ -115,6 +130,8 @@ def banner(url):
 def page_extras(url):
     """Scrape key facts from a LeekDuck event page: bonuses, shiny debuts, CD evolve move."""
     out = {"bonuses": [], "newShiny": [], "evolve": None}
+    if not url.startswith("https://leekduck.com/"):
+        return out
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 pogo-squad-build"})
         with urlopen(req, timeout=45) as r:
@@ -374,7 +391,7 @@ def leek_research_page():
                 names.add(html.unescape(m.group(1)).strip())
     events = []
     for end, title in re.findall(r'<div class="task-category event-field-research"[^>]*data-event-end="([^"]+)"[^>]*>\s*<h2[^>]*>(.*?)</h2>', t, re.S):
-        events.append({"title": re.sub(r"\s+Tasks$", "", html.unescape(re.sub(r"<[^>]+>", "", title)).strip()), "end": end[:19]})
+        events.append({"title": re.sub(r"\s+Tasks$", "", re.sub(r"<[^>]+>", "", html.unescape(re.sub(r"<[^>]+>", "", title))).strip()), "end": end[:19]})
     return names, events
 
 
@@ -646,7 +663,7 @@ def main():
             bonuses = extras["bonuses"]
         out_events.append({
             "id": e["eventID"], "name": e["name"], "type": e["eventType"], "heading": e["heading"],
-            "link": e["link"], "start": e["start"], "end": e["end"], "image": banner(e.get("image")),
+            "link": safe_link(e["link"]), "start": e["start"], "end": e["end"], "image": banner(e.get("image")),
             "mons": mons, "bonuses": bonuses, "newShiny": extras["newShiny"], "evolve": extras["evolve"],
             "region": region_label(extras.get("region"), e["name"]), "remote": extras.get("remote", []),
         })
@@ -672,7 +689,7 @@ def main():
             if f.name not in used:
                 f.unlink()
         tpl = (ROOT / "template.html").read_text(encoding="utf-8")
-        page = tpl.replace("/*__DATA__*/null", json.dumps(data, ensure_ascii=False, separators=(",", ":")))
+        page = tpl.replace("/*__DATA__*/null", js_json(data))
         # Full document around the template (the artifact host adds this skeleton itself)
         index = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
                  '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
@@ -696,7 +713,7 @@ def main():
         print(f"Wrote site/index.html + {out.name} ({out.stat().st_size // 1024} KB) + {len(used)} images: {len(out_events)} events, {len(bosses)} bosses")
         return
     tpl = (ROOT / "template.html").read_text(encoding="utf-8")
-    html = tpl.replace("/*__DATA__*/null", json.dumps(data, ensure_ascii=False, separators=(",", ":")))
+    html = tpl.replace("/*__DATA__*/null", js_json(data))
     out = ROOT / "dist" / "pogo-squad.html"
     out.parent.mkdir(exist_ok=True)
     out.write_text(html, encoding="utf-8")
