@@ -356,22 +356,26 @@ def load_previous_counters():
     return prev
 
 
-def leek_research_shinies():
-    """Names of research encounters LeekDuck marks 'Can be Shiny' (ScrapedDuck's flag is unreliable)."""
+def leek_research_page():
+    """From LeekDuck's research page: names of encounters marked 'Can be Shiny' (ScrapedDuck's flag is
+    unreliable) and the event field research sections (title + end time) so the tab can say which event it is."""
     try:
         req = urllib.request.Request("https://leekduck.com/research/", headers={"User-Agent": "Mozilla/5.0 pogo-squad-build"})
         with urlopen(req, timeout=45) as r:
             t = r.read().decode("utf-8", "replace")
     except Exception as e:
         print("  research page failed:", e)
-        return set()
+        return set(), []
     names = set()
     for li in re.findall(r'<li class="reward"[^>]*>(.*?)</li>', t, re.S):
         if "shiny-badge" in li:
             m = re.search(r'class="reward-label"><span>(.*?)</span>', li)
             if m:
                 names.add(html.unescape(m.group(1)).strip())
-    return names
+    events = []
+    for end, title in re.findall(r'<div class="task-category event-field-research"[^>]*data-event-end="([^"]+)"[^>]*>\s*<h2[^>]*>(.*?)</h2>', t, re.S):
+        events.append({"title": re.sub(r"\s+Tasks$", "", html.unescape(re.sub(r"<[^>]+>", "", title)).strip()), "end": end[:19]})
+    return names, events
 
 
 ICS_LOCATION = "The Shoppes at Chino Hills, 13920 City Center Dr, Chino Hills, CA 91709"
@@ -594,7 +598,7 @@ def main():
 
     # ---- Current field research, grouped by task type
     research = []
-    shinies = leek_research_shinies()
+    shinies, research_events = leek_research_page()
     for r in get_json(SD.format("research")):
         rewards = [{"name": w["name"], "shiny": w.get("canBeShiny", False) or w["name"] in shinies, "icon": icon(w.get("image")),
                     "cp": (w.get("combatPower") or {}).get("max")} for w in r["rewards"]]
@@ -652,6 +656,7 @@ def main():
         "events": out_events,
         "bosses": bosses,
         "research": research,
+        "researchEvents": research_events,
     }
     ok = HEALTH["want"] == 0 or HEALTH["fresh"] * 2 >= HEALTH["want"]
     print(f"counters: {HEALTH['fresh']}/{HEALTH['want']} scraped fresh -> {'ok' if ok else 'FAILED (Pokémon GO Hub page format may have changed)'}")

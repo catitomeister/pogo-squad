@@ -1,9 +1,9 @@
-# Rebuilds the site data every morning (and on push), commits it, and deploys to GitHub Pages.
+# Rebuilds the site data every 4 hours (and on push), commits it, and deploys to GitHub Pages.
 name: Update and deploy
 
 on:
   schedule:
-    - cron: "0 12 * * *"   # 5 AM Pacific (PDT)
+    - cron: "0 */4 * * *"   # every 4 hours
   push:
     branches: [main]
   workflow_dispatch:

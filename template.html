@@ -567,6 +567,10 @@ function renderResearch() {
   // only event-specific field research (the regular task pool isn't worth the space)
   const tasks = (DATA.research || []).filter(r => r.type === "event");
   let html = `<h2 class="sec">Event research</h2><p class="sec-sub">Event field research from PokéStops right now. Encounters show their max CP (100%).</p>`;
+  for (const ev of DATA.researchEvents || []) {
+    const end = dt(ev.end);   // event times are local time everywhere
+    html += `<p class="sec-sub"><b>${esc(ev.title)}</b> · until ${fmtDow(end)} ${fmtMD(end)}, ${fmtTime(end)}</p>`;
+  }
   html += tasks.length ? `<div class="rtasks">${tasks.map(r => `<div class="rtask">
       <div class="rtext">${esc(r.task)}</div>
       <div class="rrew">${r.rewards.map(w => `<span class="rmon" title="${esc(w.name)}${w.cp ? " · 100% " + w.cp : ""}">${w.icon ? `<img src="${w.icon}" alt="">` : ""}<span>${esc(w.name)}${w.cp ? ` <small>${w.cp}</small>` : ""}${w.shiny ? ` <span class="shiny">✦ shiny</span>` : ""}</span></span>`).join("")}</div>
@@ -678,7 +682,7 @@ TABS.forEach(t => { document.getElementById("tab-" + t).onclick = () => setTab(t
   }, { passive: true });
 }
 document.getElementById("foot").innerHTML =
-  `Data updated ${fmtMD(new Date(DATA.built))} from <a href="https://leekduck.com/events/" target="_blank" rel="noopener">LeekDuck</a> via ` +
+  `Data updated ${fmtMD(new Date(DATA.built))}, ${fmtTime(new Date(DATA.built))}, from <a href="https://leekduck.com/events/" target="_blank" rel="noopener">LeekDuck</a> via ` +
   `<a href="https://github.com/bigfoott/ScrapedDuck" target="_blank" rel="noopener">ScrapedDuck</a> (event images © Niantic / The Pokémon Company); base stats from pogoapi.net. ` +
   `Times are local. 100% = hundo CP at level 20 (raid, research, egg and Max Battle catches); Boosted = weather boosted (level 25); icons show the boosting weather. ` +
   `×2 = double weakness.`;
