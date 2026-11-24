@@ -382,7 +382,7 @@ def leek_research_page():
             t = r.read().decode("utf-8", "replace")
     except Exception as e:
         print("  research page failed:", e)
-        return set(), []
+        return set(), [], set(), []
     names = set()
     for li in re.findall(r'<li class="reward"[^>]*>(.*?)</li>', t, re.S):
         if "shiny-badge" in li:
@@ -390,9 +390,28 @@ def leek_research_page():
             if m:
                 names.add(html.unescape(m.group(1)).strip())
     events = []
-    for end, title in re.findall(r'<div class="task-category event-field-research"[^>]*data-event-end="([^"]+)"[^>]*>\s*<h2[^>]*>(.*?)</h2>', t, re.S):
-        events.append({"title": re.sub(r"\s+Tasks$", "", re.sub(r"<[^>]+>", "", html.unescape(re.sub(r"<[^>]+>", "", title))).strip()), "end": end[:19]})
-    return names, events
+    now_pt = (datetime.utcnow() - timedelta(hours=8)).strftime("%Y-%m-%dT%H:%M:%S")
+    for end, title, body in re.findall(r'<div class="task-category event-field-research"[^>]*data-event-end="([^"]+)"[^>]*>\s*<h2[^>]*>(.*?)</h2>(.*?)(?=<div class="task-category|\Z)', t, re.S):
+        items = []
+        for li_t in re.findall(r'<li class="task-item">(.*?)</ul>\s*</li>', body, re.S):
+            m = re.search(r'<span class="task-text"><span>(.*?)</span>', li_t, re.S)
+            rw = []
+            for li in re.findall(r'<li class="reward"[^>]*data-reward-type="encounter"[^>]*>(.*?)</li>', li_t, re.S):
+                nm = re.search(r'class="reward-label"><span>(.*?)</span>', li)
+                im = re.search(r'<img class="reward-image" src="([^"]+)"', li)
+                cp = re.search(r'Max CP</div>\s*(\d+)', li)
+                if nm:
+                    rw.append({"name": html.unescape(nm.group(1)).strip(), "shiny": "shiny-badge" in li,
+                               "icon": icon(im.group(1)) if im else None, "cp": int(cp.group(1)) if cp else None})
+            if m and rw:
+                items.append({"task": html.unescape(re.sub(r"<[^>]+>", "", m.group(1))).strip(), "type": "event", "rewards": rw})
+        tasks = {html.unescape(re.sub(r"<[^>]+>", "", x)).strip() for x in re.findall(r'<span class="task-text">(.*?)</span></span>', body, re.S)}
+        events.append({"title": re.sub(r"\s+Tasks$", "", re.sub(r"<[^>]+>", "", html.unescape(re.sub(r"<[^>]+>", "", title))).strip()), "end": end[:19], "tasks": tasks, "items": items})
+    live = set().union(*[e["tasks"] for e in events if e["end"] >= now_pt]) if events else set()
+    dead = set().union(*[e["tasks"] for e in events if e["end"] < now_pt]) - live if events else set()
+    live_items = [i for e in events if e["end"] >= now_pt for i in e["items"]]
+    events = [{"title": e["title"], "end": e["end"]} for e in events if e["end"] >= now_pt]
+    return names, events, dead, live_items
 
 
 ICS_LOCATION = "The Shoppes at Chino Hills, 13920 City Center Dr, Chino Hills, CA 91709"
@@ -615,13 +634,17 @@ def main():
 
     # ---- Current field research, grouped by task type
     research = []
-    shinies, research_events = leek_research_page()
+    shinies, research_events, dead_tasks, live_items = leek_research_page()
     for r in get_json(SD.format("research")):
         rewards = [{"name": w["name"], "shiny": w.get("canBeShiny", False) or w["name"] in shinies, "icon": icon(w.get("image")),
                     "cp": (w.get("combatPower") or {}).get("max")} for w in r["rewards"]]
+        if (r.get("type") or "event") == "event" and re.sub(r"<[^>]+>", "", r["text"]).strip() in dead_tasks:
+            continue
         research.append({"task": re.sub(r"<[^>]+>", "", r["text"]).strip(), "type": r.get("type") or "event",
                          "rewards": rewards})
 
+    if live_items:
+        research = [r for r in research if r["type"] != "event"] + live_items
     # ---- Events: keep anything that hasn't ended more than a day ago
     out_events = []
     cutoff = (datetime.now() - timedelta(days=14)).strftime("%Y-%m-%d")

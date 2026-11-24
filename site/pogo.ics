@@ -6,31 +6,8 @@ X-WR-CALNAME:POGO Squad
 REFRESH-INTERVAL;VALUE=DURATION:PT12H
 X-PUBLISHED-TTL:PT12H
 BEGIN:VEVENT
-UID:dynamax-trails-2026@pogo-squad
-DTSTAMP:20261124T192434Z
-DTSTART:20261116T100000
-DTEND:20261123T200000
-SUMMARY:Dynamax Trails
-LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
- CA 91709
-DESCRIPTION:Remote raid limit 30/day (normally 10)\nChance to receive Max P
- articles when catching event-themed Pokémon in the wild or after Max Batt
- les\nMore Power Spots than usual will be active\n2× Catch Stardust\nhttps
- ://catitomeister.github.io/pogo-squad/
-END:VEVENT
-BEGIN:VEVENT
-UID:max-mondays-2026-11-23@pogo-squad
-DTSTAMP:20261124T192434Z
-DTSTART:20261123T060000
-DTEND:20261123T210000
-SUMMARY:Dynamax Espurr during Max Monday
-LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
- CA 91709
-DESCRIPTION:Espurr (100% 719)\nhttps://catitomeister.github.io/pogo-squad/
-END:VEVENT
-BEGIN:VEVENT
 UID:cresselia-darkrai-in-5-star-raid-battles-november-2026@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20261116T060000
 DTEND:20261124T220000
 SUMMARY:Cresselia and Darkrai in 5-star Raid Battles
@@ -41,7 +18,7 @@ DESCRIPTION:Cresselia (100% 1633)\, Darkrai (100% 2136)\nhttps://catitomeis
 END:VEVENT
 BEGIN:VEVENT
 UID:mega-banette-in-mega-raids-november-2026@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20261116T060000
 DTEND:20261124T220000
 SUMMARY:Mega Banette in Mega Raids
@@ -52,7 +29,7 @@ DESCRIPTION:Mega Banette (100% 1313)\nhttps://catitomeister.github.io/pogo-
 END:VEVENT
 BEGIN:VEVENT
 UID:raidhour20261125@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20261125T180000
 DTEND:20261125T190000
 SUMMARY:Deoxys (Normal\, Defense\, Attack\, and Speed Formes) Raid Hour
@@ -62,7 +39,7 @@ DESCRIPTION:Deoxys (100% 1806)\nhttps://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
 UID:pokemonspotlighthour2026-11-26@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20261126T180000
 DTEND:20261126T190000
 SUMMARY:Noibat Spotlight Hour
@@ -73,7 +50,7 @@ DESCRIPTION:Noibat (100% 381)\n2× Catch Candy\nhttps://catitomeister.githu
 END:VEVENT
 BEGIN:VEVENT
 UID:clefable-super-mega-raid-day-2026@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20261128T140000
 DTEND:20261128T170000
 SUMMARY:Clefable Super Mega Raid Day
@@ -87,7 +64,7 @@ DESCRIPTION:Clefable (100% 1392)\nRemote Raid limit increased to 20 from Fr
 END:VEVENT
 BEGIN:VEVENT
 UID:twilight-wishes-2026@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20261124T100000
 DTEND:20261130T200000
 SUMMARY:Twilight Wishes
@@ -99,7 +76,7 @@ DESCRIPTION:Increased chance to encounter Shiny Staryu and Shiny Elgyem\nIn
 END:VEVENT
 BEGIN:VEVENT
 UID:max-mondays-2026-11-30@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20261130T060000
 DTEND:20261130T210000
 SUMMARY:Dynamax Cryogonal during Max Monday
@@ -111,7 +88,7 @@ END:VEVENT
 BEGIN:VEVENT
 UID:shadow-tornadus-incarnate-forme-in-shadow-raids-november-16-2026@pogo-s
  quad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20261116T060000
 DTEND:20261201T220000
 SUMMARY:Shadow Tornadus (Incarnate Forme) in Shadow Raids
@@ -123,7 +100,7 @@ END:VEVENT
 BEGIN:VEVENT
 UID:deoxys-normal-defense-attack-speed-formes-in-5-star-raid-battles-novemb
  er-2026@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20261125T060000
 DTEND:20261201T220000
 SUMMARY:Deoxys (Normal\, Defense\, Attack\, and Speed Formes) in 5-star Rai
@@ -135,7 +112,7 @@ DESCRIPTION:Deoxys (Normal) (100% 1806)\, Deoxys (Defense) (100% 1299)\, De
 END:VEVENT
 BEGIN:VEVENT
 UID:mega-metagross-in-mega-raids-november-2026@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20261125T060000
 DTEND:20261201T220000
 SUMMARY:Mega Metagross in Mega Raids
@@ -145,8 +122,30 @@ DESCRIPTION:Mega Metagross (100% 2166)\nhttps://catitomeister.github.io/pog
  o-squad/
 END:VEVENT
 BEGIN:VEVENT
+UID:raidhour20261202@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261202T180000
+DTEND:20261202T190000
+SUMMARY:Regidrago Raid Hour
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Regidrago (100% 1699)\nhttps://catitomeister.github.io/pogo-squ
+ ad/
+END:VEVENT
+BEGIN:VEVENT
+UID:pokemonspotlighthour2026-12-03@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261203T180000
+DTEND:20261203T190000
+SUMMARY:Wimpod Spotlight Hour
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Wimpod (100% 286)\n2× Transfer Candy\nhttps://catitomeister.gi
+ thub.io/pogo-squad/
+END:VEVENT
+BEGIN:VEVENT
 UID:max-battle-day-december-2026@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20261205T140000
 DTEND:20261205T170000
 SUMMARY:Max Battle Day
@@ -155,8 +154,71 @@ LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\,
 DESCRIPTION:https://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
+UID:tropical-paradise-2026@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261201T100000
+DTEND:20261207T200000
+SUMMARY:Tropical Paradise
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:https://catitomeister.github.io/pogo-squad/
+END:VEVENT
+BEGIN:VEVENT
+UID:max-mondays-2026-12-07@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261207T060000
+DTEND:20261207T210000
+SUMMARY:Dynamax Deino during Max Monday
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Deino (100% 606)\nhttps://catitomeister.github.io/pogo-squad/
+END:VEVENT
+BEGIN:VEVENT
+UID:mega-slowbro-in-mega-raids-december-2026@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261202T060000
+DTEND:20261208T220000
+SUMMARY:Mega Slowbro in Mega Raids
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Mega Slowbro (100% 1454)\nhttps://catitomeister.github.io/pogo-
+ squad/
+END:VEVENT
+BEGIN:VEVENT
+UID:regidrago-in-5-star-raid-battles-december-2026@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261202T060000
+DTEND:20261208T220000
+SUMMARY:Regidrago in 5-star Raid Battles
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Regidrago (100% 1699)\nhttps://catitomeister.github.io/pogo-squ
+ ad/
+END:VEVENT
+BEGIN:VEVENT
+UID:raidhour20261209@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261209T180000
+DTEND:20261209T190000
+SUMMARY:Unannounced Raid Hour
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:https://catitomeister.github.io/pogo-squad/
+END:VEVENT
+BEGIN:VEVENT
+UID:pokemonspotlighthour2026-12-10@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261210T180000
+DTEND:20261210T190000
+SUMMARY:Starly Spotlight Hour
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Starly (100% 410)\n2× Catch Stardust\nhttps://catitomeister.gi
+ thub.io/pogo-squad/
+END:VEVENT
+BEGIN:VEVENT
 UID:december-communityday2026@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20261212T140000
 DTEND:20261213T170000
 SUMMARY:December Community Day 2026
@@ -168,8 +230,59 @@ DESCRIPTION:Vulpix (100% 504)\, Alolan Vulpix (100% 504)\, Grookey (100% 62
  hing Pokémon\nhttps://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
+UID:unannounced-event-december-2026@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261208T100000
+DTEND:20261214T200000
+SUMMARY:Unannounced Event
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:https://catitomeister.github.io/pogo-squad/
+END:VEVENT
+BEGIN:VEVENT
+UID:max-mondays-2026-12-14@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261214T060000
+DTEND:20261214T210000
+SUMMARY:Dynamax Eevee during Max Monday
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Eevee (100% 612)\nhttps://catitomeister.github.io/pogo-squad/
+END:VEVENT
+BEGIN:VEVENT
+UID:mega-gengar-in-mega-raids-december-2026@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261209T060000
+DTEND:20261215T220000
+SUMMARY:Mega Gengar in Mega Raids
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Mega Gengar (100% 1644)\nhttps://catitomeister.github.io/pogo-s
+ quad/
+END:VEVENT
+BEGIN:VEVENT
+UID:unannounced-pokemon-in-5-star-raid-battles-december-2026@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261209T060000
+DTEND:20261215T220000
+SUMMARY:Unannounced Pokémon in 5-star Raid Battles
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:https://catitomeister.github.io/pogo-squad/
+END:VEVENT
+BEGIN:VEVENT
+UID:raidhour20261216@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261216T180000
+DTEND:20261216T190000
+SUMMARY:Ho-Oh Raid Hour
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Ho-Oh (100% 2207)\nhttps://catitomeister.github.io/pogo-squad/
+END:VEVENT
+BEGIN:VEVENT
 UID:minior-showers-geminids-2026@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20261211T170000
 DTEND:20261216T235900
 SUMMARY:Minior Showers: Geminids 2026
@@ -180,8 +293,19 @@ DESCRIPTION:Minior\nIncreased Stardust for catching Minior\nIncreased chanc
  ps://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
+UID:pokemonspotlighthour2026-12-17@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261217T180000
+DTEND:20261217T190000
+SUMMARY:Bergmite Spotlight Hour
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Bergmite (100% 694)\n2× Evolution XP\nhttps://catitomeister.gi
+ thub.io/pogo-squad/
+END:VEVENT
+BEGIN:VEVENT
 UID:raid-day-december-2026@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20261219T140000
 DTEND:20261219T170000
 SUMMARY:Raid Day
@@ -190,8 +314,61 @@ LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\,
 DESCRIPTION:https://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
+UID:max-mondays-2026-12-21@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261221T060000
+DTEND:20261221T210000
+SUMMARY:Dynamax Alolan Sandshrew during Max Monday
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Sandshrew (100% 720)\nhttps://catitomeister.github.io/pogo-squa
+ d/
+END:VEVENT
+BEGIN:VEVENT
+UID:ho-oh-in-5-star-raid-battles-december-2026@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261216T060000
+DTEND:20261222T220000
+SUMMARY:Ho-Oh in 5-star Raid Battles
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Ho-Oh (100% 2207)\nhttps://catitomeister.github.io/pogo-squad/
+END:VEVENT
+BEGIN:VEVENT
+UID:mega-skarmory-in-mega-raids-december-2026@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261216T060000
+DTEND:20261222T220000
+SUMMARY:Mega Skarmory in Mega Raids
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Mega Skarmory (100% 1204)\nhttps://catitomeister.github.io/pogo
+ -squad/
+END:VEVENT
+BEGIN:VEVENT
+UID:raidhour20261223@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261223T180000
+DTEND:20261223T190000
+SUMMARY:Lugia Raid Hour
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Lugia (100% 2115)\nhttps://catitomeister.github.io/pogo-squad/
+END:VEVENT
+BEGIN:VEVENT
+UID:pokemonspotlighthour2026-12-24@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261224T180000
+DTEND:20261224T190000
+SUMMARY:Delibird Spotlight Hour
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Delibird (100% 625)\n2× Catch XP\nhttps://catitomeister.github
+ .io/pogo-squad/
+END:VEVENT
+BEGIN:VEVENT
 UID:hatch-day-december-2026@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20261226T110000
 DTEND:20261226T170000
 SUMMARY:Hatch Day
@@ -200,8 +377,74 @@ LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\,
 DESCRIPTION:https://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
+UID:winter-holiday-2026@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261222T100000
+DTEND:20261228T200000
+SUMMARY:Winter Holiday 2026
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:https://catitomeister.github.io/pogo-squad/
+END:VEVENT
+BEGIN:VEVENT
+UID:max-mondays-2026-12-28@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261228T060000
+DTEND:20261228T210000
+SUMMARY:Dynamax Magikarp during Max Monday
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Magikarp (100% 157)\nhttps://catitomeister.github.io/pogo-squad
+ /
+END:VEVENT
+BEGIN:VEVENT
+UID:lugia-in-5-star-raid-battles-december-2026@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261223T060000
+DTEND:20261229T220000
+SUMMARY:Lugia in 5-star Raid Battles
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Lugia (100% 2115)\nhttps://catitomeister.github.io/pogo-squad/
+END:VEVENT
+BEGIN:VEVENT
+UID:mega-glalie-in-mega-raids-december-2026@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261223T060000
+DTEND:20261229T220000
+SUMMARY:Mega Glalie in Mega Raids
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Mega Glalie (100% 1203)\nhttps://catitomeister.github.io/pogo-s
+ quad/
+END:VEVENT
+BEGIN:VEVENT
+UID:raidhour20261230@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261230T180000
+DTEND:20261230T190000
+SUMMARY:Tornadus (Therian Forme)\, Thundurus (Therian Forme)\, and Landorus
+  (Therian Forme) Raid Hour
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Tornadus (Therian) (100% 1837)\, Thundurus (Therian) (100% 2091
+ )\, Landorus (Therian) (100% 2241)\nhttps://catitomeister.github.io/pogo-s
+ quad/
+END:VEVENT
+BEGIN:VEVENT
+UID:pokemonspotlighthour2026-12-31@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261231T180000
+DTEND:20261231T190000
+SUMMARY:Plusle and Minun Spotlight Hour
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Plusle (100% 1016)\, Minun (100% 968)\n2× Catch Candy\nhttps:/
+ /catitomeister.github.io/pogo-squad/
+END:VEVENT
+BEGIN:VEVENT
 UID:duolingo-timed-research-2026@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20261117T100000
 DTEND:20261231T235900
 SUMMARY:Pokémon GO and Duolingo Timed Research
@@ -211,7 +454,7 @@ DESCRIPTION:https://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
 UID:january-communitydayclassic2027@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20270102T140000
 DTEND:20270102T170000
 SUMMARY:January Community Day Classic
@@ -220,8 +463,53 @@ LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\,
 DESCRIPTION:https://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
+UID:new-years-2027@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261229T100000
+DTEND:20270104T200000
+SUMMARY:New Year's 2027
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:https://catitomeister.github.io/pogo-squad/
+END:VEVENT
+BEGIN:VEVENT
+UID:shadow-dialga-in-shadow-raids-december-2026@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261202T060000
+DTEND:20270105T220000
+SUMMARY:Shadow Dialga in Shadow Raids
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Dialga (100% 2307)\nhttps://catitomeister.github.io/pogo-squad/
+END:VEVENT
+BEGIN:VEVENT
+UID:mega-falinks-in-mega-raids-december-2026@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261230T060000
+DTEND:20270105T220000
+SUMMARY:Mega Falinks in Mega Raids
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Mega Falinks (100% 1347)\nhttps://catitomeister.github.io/pogo-
+ squad/
+END:VEVENT
+BEGIN:VEVENT
+UID:tornadus-thundurus-landorus-therian-formes-in-5-star-raid-battles-decem
+ ber-2026@pogo-squad
+DTSTAMP:20261124T215845Z
+DTSTART:20261230T060000
+DTEND:20270105T220000
+SUMMARY:Tornadus\, Thundurus\, and Landorus (Therian Formes) in 5-star Raid
+  Battles
+LOCATION:The Shoppes at Chino Hills\, 13920 City Center Dr\, Chino Hills\, 
+ CA 91709
+DESCRIPTION:Tornadus (Therian) (100% 1837)\, Thundurus (Therian) (100% 2091
+ )\, Landorus (Therian) (100% 2241)\nhttps://catitomeister.github.io/pogo-s
+ quad/
+END:VEVENT
+BEGIN:VEVENT
 UID:super-mega-raid-day-january-2027@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20270109T140000
 DTEND:20270109T170000
 SUMMARY:Super Mega Raid Day
@@ -231,7 +519,7 @@ DESCRIPTION:https://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
 UID:january-communityday2027@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20270116T140000
 DTEND:20270116T170000
 SUMMARY:January Community Day
@@ -241,7 +529,7 @@ DESCRIPTION:https://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
 UID:max-battle-day-january-2027@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20270123T140000
 DTEND:20270123T170000
 SUMMARY:Max Battle Day
@@ -251,7 +539,7 @@ DESCRIPTION:https://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
 UID:super-mega-raid-day-january-30-2027@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20270130T140000
 DTEND:20270130T170000
 SUMMARY:Super Mega Raid Day
@@ -261,7 +549,7 @@ DESCRIPTION:https://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
 UID:february-communityday2027@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20270206T140000
 DTEND:20270206T170000
 SUMMARY:February Community Day
@@ -271,7 +559,7 @@ DESCRIPTION:https://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
 UID:raid-day-february-2027@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20270213T140000
 DTEND:20270213T170000
 SUMMARY:Raid Day
@@ -281,7 +569,7 @@ DESCRIPTION:https://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
 UID:pokemon-go-tour-alola-global-2027@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20270227T000000
 DTEND:20270228T235959
 SUMMARY:Pokémon GO Tour: Alola - Global 2027
@@ -291,7 +579,7 @@ DESCRIPTION:https://catitomeister.github.io/pogo-squad/
 END:VEVENT
 BEGIN:VEVENT
 UID:minior-showers-eta-aquariids-2027@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20270503T170000
 DTEND:20270508T235900
 SUMMARY:Minior Showers: Eta Aquariids 2027
@@ -303,7 +591,7 @@ DESCRIPTION:Minior\nIncreased Stardust for catching Minior\nIncreased chanc
 END:VEVENT
 BEGIN:VEVENT
 UID:minior-showers-southern-delta-aquariids-2027@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20270728T170000
 DTEND:20270802T235900
 SUMMARY:Minior Showers: Southern Delta Aquariids 2027
@@ -315,7 +603,7 @@ DESCRIPTION:Minior\nIncreased Stardust for catching Minior\nIncreased chanc
 END:VEVENT
 BEGIN:VEVENT
 UID:minior-showers-perseids-2027@pogo-squad
-DTSTAMP:20261124T192434Z
+DTSTAMP:20261124T215845Z
 DTSTART:20270810T170000
 DTEND:20270815T235900
 SUMMARY:Minior Showers: Perseids 2027
