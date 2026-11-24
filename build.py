@@ -404,7 +404,7 @@ def leek_research_page():
                     rw.append({"name": html.unescape(nm.group(1)).strip(), "shiny": "shiny-badge" in li,
                                "icon": icon(im.group(1)) if im else None, "cp": int(cp.group(1)) if cp else None})
             if m and rw:
-                items.append({"task": html.unescape(re.sub(r"<[^>]+>", "", m.group(1))).strip(), "type": "event", "rewards": rw})
+                items.append({"task": html.unescape(re.sub(r"<[^>]+>", "", m.group(1))).strip(), "type": "event", "rewards": rw, "event": re.sub(r"\s+Tasks$", "", re.sub(r"<[^>]+>", "", html.unescape(title))).strip()})
         tasks = {html.unescape(re.sub(r"<[^>]+>", "", x)).strip() for x in re.findall(r'<span class="task-text">(.*?)</span></span>', body, re.S)}
         events.append({"title": re.sub(r"\s+Tasks$", "", re.sub(r"<[^>]+>", "", html.unescape(re.sub(r"<[^>]+>", "", title))).strip()), "end": end[:19], "tasks": tasks, "items": items})
     live = set().union(*[e["tasks"] for e in events if e["end"] >= now_pt]) if events else set()

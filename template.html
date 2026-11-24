@@ -176,8 +176,10 @@ header.top {
 .rtasks { display: grid; gap: 6px; }
 .rtask { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; display: grid; gap: 4px; }
 .rtext { font-weight: 700; font-size: 0.98rem; }
-.rrew { display: flex; flex-wrap: wrap; gap: 2px 10px; }
-.rmon { display: inline-flex; align-items: center; gap: 2px; font-size: 0.85rem; color: var(--muted); }
+.rrew { display: grid; gap: 2px; }
+.rev { margin: 14px 0 6px; font-size: 1.1rem; }
+.rev small { display: block; color: var(--muted); font-weight: 400; font-size: 0.85rem; }
+.rmon { display: flex; align-items: center; gap: 6px; font-size: 0.95rem; color: var(--text, inherit); }
 .rmon img { width: 32px; height: 32px; object-fit: contain; }
 .also { margin-top: 26px; font-size: 0.82rem; color: var(--muted); display: grid; gap: 4px; }
 .also a { color: var(--ink); font-weight: 700; text-decoration: none; }
@@ -567,14 +569,18 @@ function renderResearch() {
   // only event-specific field research (the regular task pool isn't worth the space)
   const tasks = (DATA.research || []).filter(r => r.type === "event");
   let html = `<h2 class="sec">Event research</h2><p class="sec-sub">Event field research from PokéStops right now. Encounters show their max CP (100%).</p>`;
-  for (const ev of DATA.researchEvents || []) {
-    const end = dt(ev.end);   // event times are local time everywhere
-    html += `<p class="sec-sub"><b>${esc(ev.title)}</b> · until ${fmtDow(end)} ${fmtMD(end)}, ${fmtTime(end)}</p>`;
-  }
-  html += tasks.length ? `<div class="rtasks">${tasks.map(r => `<div class="rtask">
+  const taskHtml = r => `<div class="rtask">
       <div class="rtext">${esc(r.task)}</div>
-      <div class="rrew">${r.rewards.map(w => `<span class="rmon" title="${esc(w.name)}${w.cp ? " · 100% " + w.cp : ""}">${w.icon ? `<img src="${w.icon}" alt="">` : ""}<span>${esc(w.name)}${w.cp ? ` <small>${w.cp}</small>` : ""}${w.shiny ? ` <span class="shiny">✦ shiny</span>` : ""}</span></span>`).join("")}</div>
-    </div>`).join("")}</div>` : `<p class="quiet">No event research right now.</p>`;
+      <div class="rrew">${r.rewards.map(w => `<span class="rmon" title="${esc(w.name)}${w.cp ? " · 100% " + w.cp : ""}">${w.icon ? `<img src="${w.icon}" alt="">` : ""}<span>${esc(w.name)}${w.cp ? ` <small>CP ${w.cp}</small>` : ""}${w.shiny ? ` <span class="shiny">✦ shiny</span>` : ""}</span></span>`).join("")}</div>
+    </div>`;
+  const evs = DATA.researchEvents || [];
+  for (const ev of evs) {
+    const end = dt(ev.end);   // event times are local time everywhere
+    const mine = tasks.filter(r => !r.event || r.event === ev.title);
+    html += `<h3 class="rev">${esc(ev.title)}<small>until ${fmtDow(end)} ${fmtMD(end)}, ${fmtTime(end)}</small></h3>`;
+    html += mine.length ? `<div class="rtasks">${mine.map(taskHtml).join("")}</div>` : `<p class="quiet">No encounter rewards listed.</p>`;
+  }
+  if (!evs.length) html += tasks.length ? `<div class="rtasks">${tasks.map(taskHtml).join("")}</div>` : `<p class="quiet">No event research right now.</p>`;
   document.getElementById("view-research").innerHTML = html;
 }
 
