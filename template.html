@@ -130,6 +130,9 @@ header.top {
 .name a::after { content: " ↗"; color: var(--muted); font-weight: 400; font-size: 0.8em; }
 
 .mons { display: grid; gap: 4px; }
+.monblock { background: var(--chip); border-radius: 10px; padding-bottom: 2px; }
+.monblock .mon { background: none; }
+.monblock .ctr { margin: 0 12px 6px; }
 .mon { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 8px; align-items: center; background: var(--chip); border-radius: 12px; padding: 6px 10px 6px 6px; }
 .mon img { width: 52px; height: 52px; object-fit: contain; }
 .mn { font-weight: 700; font-size: 1.05rem; line-height: 1.25; }
@@ -385,9 +388,8 @@ function cardHtml(e, mode, now) {
       <div class="evtop"><span class="when">${when}</span>${state}</div>
       <div class="kind${e.type === "community-day" ? " k-cd" : ""}">${esc(KIND[e.type] || e.heading)}</div>
       <div class="name"><a href="${esc(e.link)}" target="_blank" rel="noopener">${esc(e.name)}</a></div>
-      ${e.mons && e.mons.length ? `<div class="mons">${e.mons.map(m => monHtml(m, battle)).join("")}</div>` : ""}
+      ${e.mons && e.mons.length ? `<div class="mons">${e.mons.map(m => ["raid-hour", "raid-day", "raid-battles"].includes(e.type) ? `<div class="monblock">${monHtml(m, battle)}${countersHtml(bossCounters(m.name))}</div>` : monHtml(m, battle)).join("")}</div>` : ""}
       ${facts.length ? `<ul class="facts">${facts.join("")}</ul>` : ""}
-      ${["raid-hour", "raid-day", "raid-battles"].includes(e.type) ? (e.mons || []).map(m => countersHtml(bossCounters(m.name))).join("") : ""}
       ${e.type === "max-battles" ? maxCountersHtml(e.mons || []) : ""}
       ${mode === "raid" ? "" : `<div class="social" data-ev="${esc(e.id)}"${en - s > 72 * 3600e3 ? ' data-nofood="1"' : ""}></div>`}
     </div>
