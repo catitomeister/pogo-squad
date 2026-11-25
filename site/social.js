@@ -1,4 +1,4 @@
-// Social layer for the website: "who's going" + meetup suggestions on each event card.
+// Social layer for the website: "who's going" on each event card.
 // Data lives in Firestore (rules in firestore.rules). People pick a display name once; no accounts.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -25,10 +25,6 @@ const canonical = n => {
 let me = (() => { try { return canonical(localStorage.getItem(NAME_KEY)); } catch { return ""; } })();
 let ready = false, failed = false, failCode = "";
 const going = new Map();   // eventId -> [names]
-let meetups = [];          // {id, eventId, when, place, by, plus: []}
-let openForm = null;       // eventId whose food-plan form is open
-let editing = null;        // id of the food plan being edited (null = posting a new one)
-const drafts = {};         // eventId -> {when, place}
 let pending = null;        // action to run after the name is set
 
 // ---------- name chip in the header + name dialog
@@ -52,7 +48,7 @@ function askName(then) {
   pending = then || null;
   dlg.querySelector("p").textContent = me
     ? `You're ${LABELS[me] || me}. Pick a different name only if this isn't you.`
-    : "Tap your name. Friends will see it when you mark an event or join a meetup.";
+    : "Tap your name. Friends will see it when you mark an event.";
   dlg.querySelectorAll(".pick").forEach(b => b.classList.toggle("on", b.dataset.pick === me));
   dlg.showModal();
 }
@@ -71,12 +67,11 @@ dlg.addEventListener("click", async ev => {
 
 // One-time tidy-up: entries saved under names that aren't exactly on the list (e.g. "CAT", "bonkechu")
 // are merged into the matching list name. Safe to run from any device; it's a no-op once clean.
-let tidied = false, meetupsLoaded = false;
+let tidied = false;
 async function tidyNames() {
   if (tidied) return;
   tidied = true;
   const seen = new Set([...going.values(), ...wishes.values()].flat());
-  meetups.forEach(m => { seen.add(m.by); (m.plus || []).forEach(n => seen.add(n)); });
   for (const n of seen) {
     const c = canonical(n);
     if (c && c !== n) await moveName(n, c).catch(e => console.error("tidy", e));
@@ -93,19 +88,6 @@ async function moveName(from, to) {
   };
   for (const [ev, ns] of going) moveRsvp(ev, ns);
   for (const [mon, ns] of wishes) moveRsvp(WISH + mon, ns);
-  for (const m of meetups) {
-    const plus = m.plus || [];
-    if (m.by === from) {
-      // the author can't be edited under the rules, so re-post it under the new name with the same people
-      const others = plus.filter(n => n !== from && n !== to);
-      jobs.push(addDoc(collection(db, "meetups"), { eventId: m.eventId, when: m.when, place: m.place || "", by: to, plus: [], ts: serverTimestamp() })
-        .then(ref => others.length ? updateDoc(ref, { plus: others }) : null)
-        .then(() => deleteDoc(doc(db, "meetups", m.id))));
-    } else if (plus.includes(from)) {
-      const next = [...new Set(plus.map(n => (n === from ? to : n)))].filter(n => n !== m.by);
-      jobs.push(updateDoc(doc(db, "meetups", m.id), { plus: next }));
-    }
-  }
   await Promise.all(jobs);
 }
 const needName = fn => (me ? fn() : askName(fn));
@@ -152,7 +134,7 @@ const fmtWhen = (s, e) => {
   const tm = d => d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).replace(":00", "");
   return a.toDateString() === new Date(b - 1).toDateString() ? `${day(a)}, ${tm(a)}–${tm(b)}` : `${day(a)} – ${day(b)}`;
 };
-// Short WhatsApp message: what, when, who, food plans, link (details live on the site)
+// Short WhatsApp message: what, when, who, link (details live on the site)
 function shareText(id) {
   const e = (window.DATA_EVENTS || []).find(x => x.id === id);
   if (!e) return location.href;
@@ -165,56 +147,26 @@ function shareText(id) {
   const lines = [`${EMOJI[e.type] || "📅"} ${e.name.replace(/^Gigantamax /, "G-Max ")}`, when];
   const names = going.get(id) || [];
   if (names.length) lines.push(`Going: ${names.join(", ")}`);
-  for (const m of meetups.filter(x => x.eventId === id)) {
-    lines.push(`🍜 ${m.when}${m.place ? " · " + m.place : ""}`);
-  }
   lines.push(`Who's in? 👉 ${location.origin}${location.pathname}`);
   return lines.join("\n");
 }
 const waLink = id => "https://wa.me/?text=" + encodeURIComponent(shareText(id));
 
 // ---------- render into every .social slot
-// noFood: long-running events (more than 3 days) have no meetups and nobody "goes" to them:
-// no "I'm going", calendar, Share or "Food before / after?" (existing food plans, if any, still show)
+// noFood (really "long-running"): events of more than 3 days have nobody "going": no "I'm going", calendar or Share
 function socialHtml(id, noFood = false) {
-  if (noFood && !meetups.some(m => m.eventId === id)) return "";
+  if (noFood) return "";
   if (failed) return `<div class="soc-note">Can't load who's going right now${failCode ? ` (${esc(failCode)})` : ""}.
     <button class="linkish" data-act="retry">Retry</button></div>`;
   if (!ready) return `<div class="soc-note">Loading…</div>`;
   const names = going.get(id) || [];
   const mine = names.includes(me);
-  const ms = meetups.filter(m => m.eventId === id).sort((a, b) => (b.plus?.length || 0) - (a.plus?.length || 0));
-  let h = noFood ? "" : `<div class="goingrow">
+  let h = `<div class="goingrow">
     <button class="gobtn${mine ? " on" : ""}" data-act="go" data-ev="${esc(id)}" aria-pressed="${mine}">${mine ? "✓ Going" : "I'm going"}</button>
     <span class="who">${names.length ? names.map(n => n === me ? `<b>${esc(n)}</b>` : esc(n)).join(", ") : "No one yet"}</span>
     <span class="acts"><a class="calbtn" href="#" data-cal="${esc(id)}" aria-label="Add to calendar" title="Add to calendar">📅</a>
     <a class="wabtn" href="${esc(waLink(id))}" target="_blank" rel="noopener" aria-label="Share to WhatsApp">Share</a></span>
   </div>`;
-  for (const m of ms) {
-    const people = [m.by, ...(m.plus || []).filter(n => n !== m.by)];
-    const joined = people.includes(me);
-    h += `<div class="meet">
-      <div class="mwhat">🍜 <b>${esc(m.when)}</b>${m.place ? ` · ${esc(m.place)}` : ""}</div>
-      <div class="mmeta">👥 ${people.length} · ${people.map(n => n === me ? `<b>${esc(n)}</b>` : esc(n)).join(", ")}</div>
-      <div class="mbtns">
-        ${m.by === me ? `<button data-act="edit" data-id="${esc(m.id)}" data-ev="${esc(id)}">Edit</button><button data-act="del" data-id="${esc(m.id)}">Remove</button>`
-          : `<button class="${joined ? "on" : "join"}" data-act="plus" data-id="${esc(m.id)}" data-ev="${esc(id)}" aria-pressed="${joined}">${joined ? "✓ Joined" : "Join"}</button>`}
-      </div>
-    </div>`;
-  }
-  if (openForm === id) {
-    const d = drafts[id] || {};
-    const phase = d.phase || "After";
-    h += `<form class="meetform" data-ev="${esc(id)}">
-      <div class="phase" role="radiogroup" aria-label="Before or after the event">${["Before", "After"].map(p =>
-        `<label><input type="radio" name="phase" value="${p}"${p === phase ? " checked" : ""}><span>${p} the event</span></label>`).join("")}</div>
-      <input name="place" maxlength="60" placeholder="Where to eat, e.g. Dago Shave Ice" value="${esc(d.place || "")}" required>
-      <input name="when" maxlength="28" placeholder="Time (optional), e.g. 5:30pm" value="${esc(d.when || "")}">
-      <div class="dlgbtns"><button type="button" data-act="cancelform" data-ev="${esc(id)}">Cancel</button><button type="submit" class="primary">${editing ? "Save" : "Post"}</button></div>
-    </form>`;
-  } else if (!noFood) {
-    h += `<button class="linkish" data-act="openform" data-ev="${esc(id)}">🍜 Food before / after?</button>`;
-  }
   return h;
 }
 function fill() {
@@ -239,50 +191,7 @@ document.addEventListener("click", ev => {
       else await setDoc(ref, { eventId: id, name: me, ts: serverTimestamp() });
     } catch (e) { report(e); }
   });
-  if (act === "openform") needName(() => { openForm = id; editing = null; delete drafts[id]; fill(); document.querySelector(`.meetform[data-ev="${CSS.escape(id)}"] input[name=place]`)?.focus(); });
-  if (act === "cancelform") { openForm = null; editing = null; delete drafts[id]; fill(); }
-  if (act === "edit") {
-    const m = meetups.find(x => x.id === mid); if (!m) return;
-    const mm = String(m.when).match(/^(Before|After)(?:\s*·\s*)?(.*)$/);
-    const rest = mm ? mm[2].trim() : "";
-    drafts[id] = { phase: mm ? mm[1] : "After", when: mm ? (rest === "event" ? "" : rest) : m.when, place: m.place || "" };
-    openForm = id; editing = mid; fill();
-    document.querySelector(`.meetform[data-ev="${CSS.escape(id)}"] input[name=place]`)?.focus();
-  }
   if (act === "retry") location.reload();
-  if (act === "plus") needName(async () => {
-    const m = meetups.find(x => x.id === mid); if (!m) return;
-    const joining = !(m.plus || []).includes(me);
-    try {
-      await updateDoc(doc(db, "meetups", mid), { plus: joining ? arrayUnion(me) : arrayRemove(me) });
-    } catch (e) { report(e); }
-  });
-  if (act === "del") deleteDoc(doc(db, "meetups", mid)).catch(report);
-});
-document.addEventListener("input", ev => {
-  const f = ev.target.closest(".meetform"); if (!f) return;
-  drafts[f.dataset.ev] = { when: f.when.value, place: f.place.value, phase: f.phase.value };
-});
-document.addEventListener("submit", async ev => {
-  const f = ev.target.closest(".meetform"); if (!f) return;
-  ev.preventDefault();
-  const time = f.when.value.trim(), place = f.place.value.trim();
-  if (!place) return;
-  const when = (f.phase.value || "After") + (time ? " · " + time : "");
-  const id = f.dataset.ev;
-  try {
-    const old = editing && meetups.find(x => x.id === editing);
-    const ref = await addDoc(collection(db, "meetups"), { eventId: id, when, place, by: me, plus: [], ts: serverTimestamp() });
-    if (old) {
-      // rules only allow changing the join list, so an edit re-posts the plan, keeps who joined, and removes the old one
-      const keep = (old.plus || []).filter(n => n !== me);
-      if (keep.length) await updateDoc(ref, { plus: keep });
-      await deleteDoc(doc(db, "meetups", old.id));
-    }
-    openForm = null; editing = null; delete drafts[id];
-    document.activeElement?.blur();
-    fill();
-  } catch (e) { report(e); }
 });
 function fail(where, e) {
   console.error(where, e);
@@ -311,14 +220,8 @@ onAuthStateChanged(auth, user => {
     });
     for (const v of [...going.values(), ...wishes.values()]) v.sort((a, b) => a.localeCompare(b));
     ready = true; fill();
-    if (meetupsLoaded) tidyNames();
+    tidyNames();
   }, e => fail("rsvps", e));
-  onSnapshot(query(collection(db, "meetups"), where("ts", ">=", since)), snap => {
-    meetups = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    meetupsLoaded = true;
-    fill();
-    if (ready) tidyNames();
-  }, e => fail("meetups", e));
 });
 signInAnonymously(auth).catch(e => fail("sign-in", e));
 fill();
