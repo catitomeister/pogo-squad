@@ -106,6 +106,13 @@ header.top {
 .bigrow .rtxt { flex: 1; }
 .bdate { flex: none; width: 62px; text-align: center; font: 700 0.74rem var(--f-data); line-height: 1.3; color: var(--muted); background: var(--chip); border-radius: 10px; padding: 5px 2px; }
 .bdate b { display: block; font: 800 0.98rem var(--f-display); color: var(--ink); }
+/* Events tab: the event banner behind each row, darkened so the text stays readable */
+.bigrow.has-img summary { background: linear-gradient(90deg, rgba(8,14,30,.88) 0%, rgba(8,14,30,.62) 60%, rgba(8,14,30,.3) 100%), var(--bgimg) center / cover; border-radius: 11px; padding: 12px; }
+.bigrow.has-img .rname { color: #fff; }
+.bigrow.has-img .rmeta { color: #dbe6ee; }
+.bigrow.has-img .rchev { color: #fff; }
+.bigrow.has-img .bdate { background: rgba(255,255,255,.92); }
+.bigrow.has-img[open] summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
 .run.regional { opacity: 0.7; }
 .thumb { position: relative; background: var(--chip); aspect-ratio: 3 / 1; display: block; }
 .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -601,7 +608,8 @@ function bigRowHtml(e, now) {
   const n = Math.round((startOfDay(s) - startOfDay(now)) / DAY);
   const when = n === 0 ? "today" : n === 1 ? "tomorrow" : `in ${n}d`;
   const meta = [KIND[e.type] || e.heading, e.region ? "📍 " + e.region : eventHint(e), when].filter(Boolean).join(" · ");
-  return `<details class="run bigrow${e.region ? " regional" : ""}"><summary>
+  const bg = e.image ? ` style="--bgimg:url('${esc(e.image)}')"` : "";
+  return `<details class="run bigrow${e.region ? " regional" : ""}${e.image ? " has-img" : ""}"><summary${bg}>
       <span class="bdate"><b>${fmtMD(s, tz)}</b>${multi ? "→ " + fmtMD(endDay, tz) : fmtDow(s, tz)}</span>
       <span class="rtxt"><b class="rname">${esc(e.name)}</b><span class="rmeta">${esc(meta)}</span></span>
       <span class="rchev" aria-hidden="true">▾</span></summary>${cardHtml(e, multi ? "week" : "day", now)}</details>`;
