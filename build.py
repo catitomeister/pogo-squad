@@ -209,7 +209,9 @@ def hub_counters(name, pid, keep=6, slug=None, page="counters"):
             t = r.read().decode("utf-8", "replace")
         # Rows look like <tr><td class=..>1.</td><td ..><a title="Name stats, best moves ..">..</a></td><td>fast move</td>..
         for _, row in re.findall(r"<tr[^>]*>\s*<td[^>]*>\s*(\d+)\.\s*</td>(.*?)</tr>", t, re.S):
-            nm = re.search(r'<a title="(.*?) stats, best moves', row) or re.search(r'<img alt="(.*?) Pok', row)
+            nm = (re.search(r'data-pokemon-chip-name="true">([^<]+)</span>', row) or re.search(r'title="([^"]*?) stats, best moves', row))
+            if not nm or len(nm.group(1)) > 40 or "<" in nm.group(1):
+                continue
             moves = re.findall(r'title="Opens (.*?) page with details', row)
             if not nm or len(moves) < 2:
                 continue
