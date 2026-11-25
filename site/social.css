@@ -21,8 +21,14 @@
   background: radial-gradient(circle, #fff 0 22%, #1d1d1f 24% 36%, transparent 38%), linear-gradient(#e53935 0 46%, #1d1d1f 46% 54%, #fff 54%);
   transition: transform .2s;
 }
-.gobtn.on { background: var(--accent); color: var(--surface); }
-.gobtn.on::before { transform: rotate(180deg) scale(1.1); }
+/* Once you're going, the ball turns into a Master Ball: purple with two pink dots */
+.gobtn.on { background: #f1e8fb; border-color: #6b2fa8; color: #5a2294; }
+.gobtn.on::before {
+  transform: rotate(180deg) scale(1.1);
+  background: radial-gradient(circle, #fff 0 22%, #1d1d1f 24% 36%, transparent 38%),
+    radial-gradient(circle at 26% 26%, #f06bb0 0 15%, transparent 17%), radial-gradient(circle at 74% 26%, #f06bb0 0 15%, transparent 17%),
+    linear-gradient(#9a5bd6 0 46%, #1d1d1f 46% 54%, #fff 54%);
+}
 .who { font-size: 0.92rem; color: var(--muted); min-width: 0; flex: 1 1 100%; order: 3; }
 .goingrow { flex-wrap: wrap; }
 .wabtn {
