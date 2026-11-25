@@ -1,7 +1,7 @@
 /* Social layer (website only): name chip, who's going, meetups. Uses the page's color tokens. */
 .mechip {
   appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
-  font: 700 0.85rem var(--f-body); padding: 5px 12px; border-radius: 999px; cursor: pointer;
+  font: 700 0.85rem var(--f-body); padding: 5px 12px; border-radius: 10px; cursor: pointer;
   margin: 0 0 8px auto; white-space: nowrap; flex: none; max-width: 30vw; overflow: hidden; text-overflow: ellipsis;
 }
 .top-inner { align-items: center; }
@@ -12,13 +12,21 @@
 .goingrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .gobtn {
   appearance: none; border: 2px solid var(--accent); background: transparent; color: var(--accent);
-  font: 700 0.92rem var(--f-body); padding: 6px 14px; border-radius: 999px; cursor: pointer;
+  font: 700 0.92rem var(--f-body); padding: 6px 14px 6px 10px; border-radius: 10px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+/* Poké Ball icon: red top, white bottom, button in the middle. Tapping "catches" it. */
+.gobtn::before {
+  content: ""; width: 20px; height: 20px; border-radius: 50%; flex: none; border: 2px solid #1d1d1f;
+  background: radial-gradient(circle, #fff 0 22%, #1d1d1f 24% 36%, transparent 38%), linear-gradient(#e53935 0 46%, #1d1d1f 46% 54%, #fff 54%);
+  transition: transform .2s;
 }
 .gobtn.on { background: var(--accent); color: var(--surface); }
-.who { font-size: 0.92rem; color: var(--muted); min-width: 0; flex: 1; }
+.gobtn.on::before { transform: rotate(180deg) scale(1.1); }
+.who { font-size: 0.92rem; color: var(--muted); min-width: 0; flex: 1 1 100px; }
 .wabtn {
   display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
-  background: #25d366; color: #0b3d22; font: 700 0.85rem var(--f-body); padding: 6px 12px; border-radius: 999px;
+  background: #25d366; color: #0b3d22; font: 700 0.85rem var(--f-body); padding: 6px 12px; border-radius: 10px;
 }
 .wabtn::before {
   content: ""; width: 16px; height: 16px; background: currentColor;
@@ -33,7 +41,7 @@
 .mbtns { grid-column: 2; grid-row: 1 / span 2; display: flex; gap: 6px; }
 .mbtns button {
   appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
-  font: 700 0.85rem var(--f-body); padding: 5px 12px; border-radius: 999px; cursor: pointer;
+  font: 700 0.85rem var(--f-body); padding: 5px 12px; border-radius: 10px; cursor: pointer;
 }
 .mbtns button.join { background: var(--accent); border-color: var(--accent); color: var(--surface); padding: 6px 16px; font-size: 0.92rem; }
 .mbtns button.on { background: var(--live); border-color: var(--live); color: var(--surface); }
@@ -47,7 +55,7 @@
 .dlgbtns { display: flex; justify-content: flex-end; gap: 8px; }
 .dlgbtns button {
   appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
-  font: 700 0.9rem var(--f-body); padding: 7px 14px; border-radius: 999px; cursor: pointer;
+  font: 700 0.9rem var(--f-body); padding: 7px 14px; border-radius: 10px; cursor: pointer;
 }
 .dlgbtns button.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
 
@@ -66,13 +74,13 @@
   .mechip { margin-bottom: 0; }
 }
 .acts { display: inline-flex; gap: 6px; align-items: center; margin-left: auto; }
-.calbtn { text-decoration: none; font-size: 1.15rem; line-height: 1; padding: 4px 6px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); }
+.calbtn { text-decoration: none; font-size: 1.15rem; line-height: 1; padding: 4px 6px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); }
 .wanted { background: var(--accent-soft); color: var(--accent); border-radius: 10px; padding: 6px 10px; font-size: 0.88rem; font-weight: 700; }
 .wanted b { text-decoration: underline; }
 .wishes { display: flex; flex-wrap: wrap; gap: 6px; }
-.wish { appearance: none; border: 0; background: var(--accent-soft); color: var(--accent); font: 700 0.88rem var(--f-body); padding: 5px 10px; border-radius: 999px; cursor: pointer; }
+.wish { appearance: none; border: 0; background: var(--accent-soft); color: var(--accent); font: 700 0.88rem var(--f-body); padding: 5px 10px; border-radius: 10px; cursor: pointer; }
 .wishadd { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
-.wishadd button { appearance: none; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); font: 700 0.9rem var(--f-body); padding: 7px 14px; border-radius: 999px; cursor: pointer; }
+.wishadd button { appearance: none; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); font: 700 0.9rem var(--f-body); padding: 7px 14px; border-radius: 10px; cursor: pointer; }
 .calsub { margin-top: 26px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; font-size: 0.92rem; line-height: 1.5; }
 .calsub a { color: var(--accent); font-weight: 700; }
 .pickgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }

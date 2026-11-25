@@ -35,13 +35,13 @@
 .rk-dot.y { background: #e0a020; }
 .rk-dot.r { background: #d04a3a; }
 .rk-acts { padding: 4px 0 12px; display: flex; gap: 8px; flex-wrap: wrap; }
-.rk-btn { appearance: none; text-decoration: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 700 0.88rem var(--f-body); padding: 7px 14px; border-radius: 999px; cursor: pointer; display: inline-block; }
+.rk-btn { appearance: none; text-decoration: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 700 0.88rem var(--f-body); padding: 7px 14px; border-radius: 10px; cursor: pointer; display: inline-block; }
 .rk-btn.on { background: var(--live); border-color: var(--live); color: var(--surface); }
 .rk-legend { font-size: 0.78rem; color: var(--muted); margin: 10px 2px; }
 .rk-legend .rk-dot { width: 9px; height: 9px; margin: 0 2px 0 6px; }
 
 .rk-seg { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 0.82rem; color: var(--muted); margin: 6px 0; }
-.rk-seg button { appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 700 0.85rem var(--f-body); padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+.rk-seg button { appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 700 0.85rem var(--f-body); padding: 5px 12px; border-radius: 10px; cursor: pointer; }
 .rk-seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 .rk-grp { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px 6px; margin-top: 10px; }
 .rk-gh { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
