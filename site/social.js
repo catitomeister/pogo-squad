@@ -14,15 +14,25 @@ const db = getFirestore(app);
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const NAME_KEY = "pogo.name";
-// The squad. People pick their name from this list (no typing), so names can't drift or duplicate.
+// Names are typed once and remembered on the phone. These are the known spellings (so "cat" or "ShoBaoBao"
+// always land on the same person); anyone new just types their name.
 const FRIENDS = ["ShoBaoBao", "Bonkechu", "Brian", "Jen", "Eric", "Ethan", "Jackie", "Karina", "Alice"];
 const LABELS = { ShoBaoBao: "ShoBaoBao (Cat)" };
 const ALIASES = { cat: "ShoBaoBao" };  // old free-typed names -> list name (case-insensitive)
-const canonical = n => {
-  const k = String(n || "").trim().toLowerCase();
+// Names listed here disappear from the site (to remove someone, add their name and push).
+const HIDDEN = [];
+const hidden = n => HIDDEN.some(h => h.toLowerCase() === String(n).trim().toLowerCase());
+const clean = n => String(n || "").replace(/\s+/g, " ").trim().slice(0, 20);
+const canonical = n => {                       // fixed list only (used by the one-time tidy-up)
+  const k = clean(n).toLowerCase();
   return FRIENDS.find(f => f.toLowerCase() === k) || ALIASES[k] || "";
 };
-let me = (() => { try { return canonical(localStorage.getItem(NAME_KEY)); } catch { return ""; } })();
+const seenNames = () => [...new Set([...going.values()].flat())].sort();
+const resolveName = n => {                     // typed name -> existing spelling if there is one (any capitalisation)
+  const c = clean(n), k = c.toLowerCase();
+  return canonical(c) || seenNames().find(x => x.toLowerCase() === k) || c;
+};
+let me = (() => { try { return clean(localStorage.getItem(NAME_KEY)); } catch { return ""; } })();
 let ready = false, failed = false, failCode = "";
 const going = new Map();   // eventId -> [names]
 let pending = null;        // action to run after the name is set
@@ -35,11 +45,10 @@ header.insertBefore(chip, header.querySelector(".tabs"));
 const dlg = document.createElement("dialog");
 dlg.className = "namedlg";
 dlg.innerHTML = `<form method="dialog" id="nameform">
-  <h3>Who are you?</h3>
+  <h3>What's your name?</h3>
   <p></p>
-  <div class="pickgrid">${FRIENDS.map(f => `<button type="button" class="pick" data-pick="${esc(f)}">${esc(LABELS[f] || f)}</button>`).join("")}</div>
-  <p class="soc-note">Not on the list? Ask Cat to add you.</p>
-  <div class="dlgbtns"><button type="button" id="namecancel">Cancel</button></div>
+  <input id="nameinput" maxlength="20" autocomplete="off" autocapitalize="words" placeholder="Your name" required>
+  <div class="dlgbtns"><button type="button" id="namecancel">Cancel</button><button type="submit" class="primary">Save</button></div>
 </form>`;
 document.body.appendChild(dlg);
 function paintChip() { chip.textContent = me ? me : "Set name"; chip.title = me ? "Change your name" : "Set your name"; }
@@ -47,17 +56,19 @@ paintChip();
 function askName(then) {
   pending = then || null;
   dlg.querySelector("p").textContent = me
-    ? `You're ${LABELS[me] || me}. Pick a different name only if this isn't you.`
-    : "Tap your name. Friends will see it when you mark an event.";
-  dlg.querySelectorAll(".pick").forEach(b => b.classList.toggle("on", b.dataset.pick === me));
+    ? `You're ${LABELS[me] || me}. Change it only if this isn't you.`
+    : "Type your name once. Friends will see it when you mark an event.";
+  dlg.querySelector("#nameinput").value = me;
   dlg.showModal();
+  dlg.querySelector("#nameinput").focus();
 }
 chip.onclick = () => askName();
 dlg.querySelector("#namecancel").onclick = () => { pending = null; dlg.close(); };
-dlg.addEventListener("click", async ev => {
-  const b = ev.target.closest("[data-pick]");
-  if (!b) return;
-  me = b.dataset.pick;
+dlg.querySelector("#nameform").addEventListener("submit", ev => {
+  ev.preventDefault();
+  const n = resolveName(dlg.querySelector("#nameinput").value);
+  if (!n) return;
+  me = n;
   try { localStorage.setItem(NAME_KEY, me); } catch {}
   paintChip();
   dlg.close();
@@ -214,6 +225,7 @@ onAuthStateChanged(auth, user => {
     going.clear(); wishes.clear();
     snap.forEach(d => {
       const { eventId, name } = d.data();
+      if (hidden(name)) return;
       const [map, key] = eventId.startsWith(WISH) ? [wishes, eventId.slice(WISH.length)] : [going, eventId];
       if (!map.has(key)) map.set(key, []);
       map.get(key).push(name);
